@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="今天 HTML 发布链路跑通了，像把一个长期悬着的想法稳稳落地：文章从想法到上线，终于变得轻、快、可靠。" />
+    <title>今天，HTML 跑通了</title>
+    <style>
+      :root {
+        --paper: #f7f7f5;
+        --paper-edge: #efefea;
+        --ink: #1a1a1a;
+        --ink-soft: #4a4a4a;
+        --ink-faint: #7a7a7a;
+        --rule: #d8d8d2;
+        --rule-soft: #e8e8e2;
+        --accent: #6f9bb8;
+        --accent-soft: #d9e6f0;
+        --accent-faint: #eef4f8;
+        --warn: #b88a4a;
+        --warn-soft: #f5ecdc;
+        --danger: #a05050;
+        --code-bg: #ececea;
+        --brain: #6f9bb8;
+        --brain-bg: #eef4f8;
+        --hands: #b88a4a;
+        --hands-bg: #f5ecdc;
+        --session: #6b7560;
+        --session-bg: #ecede5;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { font-size: 16px; }
+      body {
+        font-family:
+          ui-serif, "Charter", "Iowan Old Style", "Source Serif Pro", Georgia,
+          "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+        background: var(--paper);
+        color: var(--ink);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        padding: 64px 24px 96px;
+      }
+
+      .doc { max-width: 840px; margin: 0 auto; }
+      .doc-header {
+        border-bottom: 1px solid var(--rule);
+        padding-bottom: 28px;
+        margin-bottom: 48px;
+      }
+      .doc-eyebrow {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 14px;
+      }
+      .doc-title {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 34px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+      }
+      .doc-subtitle {
+        font-size: 16px;
+        color: var(--ink-soft);
+        margin-top: 10px;
+        font-style: italic;
+      }
+      .doc-meta {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        color: var(--ink-faint);
+        margin-top: 18px;
+        display: flex;
+        gap: 24px;
+      }
+
+      .tldr {
+        background: var(--accent-faint);
+        border-left: 2px solid var(--accent);
+        padding: 20px 24px;
+        margin-bottom: 56px;
+        font-size: 15px;
+      }
+      .tldr-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      section { margin-bottom: 56px; }
+      h2 {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.005em;
+        margin-bottom: 18px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--rule);
+      }
+      h2 .num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-weight: 500;
+        margin-right: 14px;
+        letter-spacing: 0.05em;
+      }
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 28px 0 10px;
+      }
+      h4 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 22px 0 8px;
+      }
+      p { margin-bottom: 14px; }
+      p + p { margin-top: -2px; }
+      code {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+        background: var(--code-bg);
+        padding: 1px 5px;
+        border-radius: 2px;
+      }
+      ul, ol { margin: 8px 0 16px 22px; }
+      li { margin-bottom: 6px; }
+      strong { font-weight: 600; }
+      em { color: var(--ink-soft); }
+      blockquote {
+        border-left: 2px solid var(--rule);
+        padding: 4px 0 4px 18px;
+        margin: 14px 0 18px;
+        color: var(--ink-soft);
+        font-style: italic;
+      }
+
+      .callout {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 18px;
+        margin: 16px 0 20px;
+      }
+      .callout.cite {
+        border-left: 2px solid var(--accent);
+        border-top: none;
+        border-right: none;
+        border-bottom: none;
+        background: var(--accent-faint);
+        padding-left: 22px;
+        font-style: italic;
+      }
+      .callout-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .cite-source {
+        font-style: normal;
+        font-size: 12px;
+        color: var(--ink-faint);
+        margin-top: 10px;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin: 20px 0 18px;
+      }
+      .card {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 16px 14px;
+      }
+      .card-icon {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .card-name {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 17px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .card-where {
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-style: italic;
+        margin-bottom: 10px;
+      }
+      .card-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+      .card.tone-a .card-icon { color: var(--brain); }
+      .card.tone-b .card-icon { color: var(--hands); }
+      .card.tone-c .card-icon { color: var(--session); }
+
+      footer {
+        margin-top: 80px;
+        padding-top: 24px;
+        border-top: 1px solid var(--rule);
+        font-size: 12px;
+        color: var(--ink-faint);
+      }
+      footer h4 {
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        margin-bottom: 10px;
+        color: var(--ink-soft);
+      }
+      footer ul { list-style: none; margin-left: 0; }
+      footer li { margin-bottom: 4px; }
+      .mascot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+
+      @media (max-width: 720px) {
+        body { padding: 32px 16px 64px; }
+        .doc-title { font-size: 26px; }
+        .cards { grid-template-columns: 1fr; }
+        .doc-meta { flex-wrap: wrap; gap: 12px; }
+      }
+    </style>
+  </head>
+  <body>
+    <article class="doc">
+      <header class="doc-header">
+        <div class="doc-eyebrow"><span class="mascot"></span>Mix · Publishing Note</div>
+        <h1 class="doc-title">今天，HTML 跑通了</h1>
+        <p class="doc-subtitle">一条从想法到页面的路，终于变短了，也变亮了。</p>
+        <div class="doc-meta">
+          <span>STATUS · PUBLISHED</span>
+          <span>DATE · 2026-07-02</span>
+          <span>AUTHOR · kemengwang</span>
+        </div>
+      </header>
+
+      <div class="tldr">
+        <div class="tldr-label">TL;DR</div>
+        今天 HTML 发布链路跑通了，这不是一次普通的技术验证，而是一次写作体验的松绑。文章不再被仓库、流水线、镜像和等待时间层层拦住；一个想法落成一篇页面，只需要生成、上传、打开。轻快，是今天最值得赞美的词。
+      </div>
+
+      <section>
+        <h2><span class="num">01</span>值得高兴的是，路真的变短了</h2>
+        <p>以前一篇文章要上线，心里总会先自动排队：写内容、改代码、提交、推送、等 CI、看镜像、再确认服务。流程当然可以工作，但它不够像写作，更像一次小型发布。</p>
+        <p>今天不一样。HTML 跑通之后，文章从“我想写”到“我看见”，中间少了很多仪式感很强但没有必要的环节。它让发布重新回到内容本身：写下想法，生成页面，推到服务器，然后就在那里了。</p>
+        <div class="callout cite">
+          好的发布链路，不应该在作者和表达之间摆出太多门槛。
+          <div class="cite-source">— 2026-07-02 · 一次很顺的上线</div>
+        </div>
+      </section>
+
+      <section>
+        <h2><span class="num">02</span>它轻，但不是随便</h2>
+        <p>这套模式的漂亮之处，在于它没有为了“快”牺牲清晰边界。文章是完整的 HTML 文件，样式内聚，路径明确，Nginx 负责托管，索引服务负责读取目录。每一层做一件事，每一件事都很直接。</p>
+        <p>这让系统有一种很舒服的朴素感：不需要数据库，不需要 CMS，不需要为了发一篇文章启动一整套工程机器。它只是把最终要被浏览器打开的东西，直接放到最该出现的位置。</p>
+        <div class="cards">
+          <div class="card tone-a">
+            <div class="card-icon">WRITE</div>
+            <div class="card-name">表达变快</div>
+            <div class="card-where">→ 想法不再等流程</div>
+            <div class="card-desc">内容可以在热度还在的时候抵达页面，写作节奏更接近真实思考。</div>
+          </div>
+          <div class="card tone-b">
+            <div class="card-icon">SHIP</div>
+            <div class="card-name">发布变轻</div>
+            <div class="card-where">→ HTML 直接上线</div>
+            <div class="card-desc">生成后的文件被推送到服务器静态目录，省掉重复构建和镜像等待。</div>
+          </div>
+          <div class="card tone-c">
+            <div class="card-icon">READ</div>
+            <div class="card-name">访问变稳</div>
+            <div class="card-where">→ Nginx 托管静态页</div>
+            <div class="card-desc">页面最终只是静态资源，打开路径清楚，服务压力也足够低。</div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2><span class="num">03</span>最开心的是，它符合直觉</h2>
+        <p>这条链路让人开心，不只是因为速度快，而是因为它符合直觉。博客文章本质上就是一份可以被浏览器阅读的文档，那么把它生成成 HTML，再放到静态目录里，本来就是一条很自然的路。</p>
+        <p>当工具退到幕后，写作的手感会回来。你不用在发文章前先切换到“工程发布模式”，也不用为一段随笔承担完整应用部署的重量。今天跑通的不是某个命令，而是一种更顺手的节奏。</p>
+        <blockquote>
+          一篇文章能在几秒内出现，人的表达欲就不会在等待里被消耗。
+        </blockquote>
+      </section>
+
+      <section>
+        <h2><span class="num">04</span>给今天一点掌声</h2>
+        <p>今天值得被认真记一笔。因为很多个人工具的幸福感，往往不是来自宏大的架构，而是来自一个瞬间：我刚刚想到的东西，现在已经在我的网站上了。</p>
+        <p>这就是 HTML 跑通的意义。它小、清楚、直接，但它把博客从“工程结果”重新拉回到“表达现场”。以后再写技术总结、生活片段、踩坑记录、突然冒出来的想法，都可以少一点等待，多一点抵达。</p>
+        <div class="callout">
+          <div class="callout-label">TODAY</div>
+          今天的关键词：轻、快、稳、顺手。以及，非常值得开心。
+        </div>
+      </section>
+
+      <footer>
+        <h4>Note</h4>
+        <ul>
+          <li>Published through the DOH static HTML flow · category <code>mix</code></li>
+        </ul>
+      </footer>
+    </article>
+  </body>
+</html>

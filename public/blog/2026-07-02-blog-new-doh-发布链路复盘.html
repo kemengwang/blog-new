@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blog New DOH 发布链路复盘</title>
+    <meta name="description" content="记录 2026-07-02 从旧 Next.js 博客迁移到静态文章、动态索引、Docker SSR、Nginx 分发和 DOH 发布 Skill 的完整流程。" />
+    <style>
+      :root {
+        --paper: #f7f7f5;
+        --paper-edge: #efefea;
+        --ink: #1a1a1a;
+        --ink-soft: #4a4a4a;
+        --ink-faint: #7a7a7a;
+        --rule: #d8d8d2;
+        --rule-soft: #e8e8e2;
+        --accent: #6f9bb8;
+        --accent-soft: #d9e6f0;
+        --accent-faint: #eef4f8;
+        --warn: #b88a4a;
+        --warn-soft: #f5ecdc;
+        --danger: #a05050;
+        --code-bg: #ececea;
+
+        /* Semantic palette for three-layer cards. Rename freely
+           (e.g. --layer-a / --layer-b / --layer-c) when the three
+           layers in the doc are not brain/hands/session. */
+        --brain: #6f9bb8;
+        --brain-bg: #eef4f8;
+        --hands: #b88a4a;
+        --hands-bg: #f5ecdc;
+        --session: #6b7560;
+        --session-bg: #ecede5;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { font-size: 16px; }
+
+      /* Font stacks include both English serifs/monospace and CJK
+         fallbacks so the same template renders cleanly for English
+         or Chinese source content. */
+      body {
+        font-family:
+          ui-serif, "Charter", "Iowan Old Style", "Source Serif Pro", Georgia,
+          "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+        background: var(--paper);
+        color: var(--ink);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        padding: 64px 24px 96px;
+      }
+
+      .doc { max-width: 840px; margin: 0 auto; }
+
+      /* ─── Header ─── */
+      .doc-header {
+        border-bottom: 1px solid var(--rule);
+        padding-bottom: 28px;
+        margin-bottom: 48px;
+      }
+      .doc-eyebrow {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 14px;
+      }
+      .doc-title {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 34px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+      }
+      .doc-subtitle {
+        font-size: 16px;
+        color: var(--ink-soft);
+        margin-top: 10px;
+        font-style: italic;
+      }
+      .doc-meta {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        color: var(--ink-faint);
+        margin-top: 18px;
+        display: flex;
+        gap: 24px;
+      }
+
+      /* ─── TL;DR ─── */
+      .tldr {
+        background: var(--accent-faint);
+        border-left: 2px solid var(--accent);
+        padding: 20px 24px;
+        margin-bottom: 56px;
+        font-size: 15px;
+      }
+      .tldr-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      /* ─── Sections ─── */
+      section { margin-bottom: 56px; }
+      h2 {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.005em;
+        margin-bottom: 18px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--rule);
+      }
+      h2 .num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-weight: 500;
+        margin-right: 14px;
+        letter-spacing: 0.05em;
+      }
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 28px 0 10px;
+      }
+      h4 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 22px 0 8px;
+      }
+      p { margin-bottom: 14px; }
+      p + p { margin-top: -2px; }
+      a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+      a:hover { border-bottom-color: var(--accent); }
+      code {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+        background: var(--code-bg);
+        padding: 1px 5px;
+        border-radius: 2px;
+      }
+      pre {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12.5px;
+        line-height: 1.55;
+        background: var(--code-bg);
+        padding: 14px 18px;
+        margin: 14px 0 18px;
+        overflow-x: auto;
+        border-left: 2px solid var(--rule);
+      }
+      pre code { background: transparent; padding: 0; }
+      ul, ol { margin: 8px 0 16px 22px; }
+      li { margin-bottom: 6px; }
+      strong { font-weight: 600; }
+      em { color: var(--ink-soft); }
+      blockquote {
+        border-left: 2px solid var(--rule);
+        padding: 4px 0 4px 18px;
+        margin: 14px 0 18px;
+        color: var(--ink-soft);
+        font-style: italic;
+      }
+
+      /* ─── Tables ─── */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 14px 0 18px;
+        font-size: 14px;
+      }
+      th, td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--rule-soft);
+        vertical-align: top;
+      }
+      th {
+        font-weight: 600;
+        font-family:
+          ui-sans-serif, system-ui,
+          "PingFang SC", "Hiragino Sans GB", sans-serif;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--ink-faint);
+        border-bottom: 1px solid var(--rule);
+      }
+      tbody tr:hover { background: rgba(0,0,0,0.015); }
+      td.num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+      }
+      td.accent { color: var(--accent); font-weight: 500; }
+
+      /* ─── Callouts ─── */
+      .callout {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 18px;
+        margin: 16px 0 20px;
+      }
+      .callout.warn {
+        border-color: #e6d4a8;
+        background: var(--warn-soft);
+      }
+      .callout.cite {
+        border-left: 2px solid var(--accent);
+        border-top: none; border-right: none; border-bottom: none;
+        background: var(--accent-faint);
+        padding-left: 22px;
+        font-style: italic;
+      }
+      .callout-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .callout.warn .callout-label { color: var(--warn); }
+      .cite-source {
+        font-style: normal;
+        font-size: 12px;
+        color: var(--ink-faint);
+        margin-top: 10px;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+      }
+
+      /* ─── Figure / Diagram ─── */
+      figure {
+        margin: 28px 0 32px;
+        border: 1px solid var(--rule);
+        background: #fff;
+      }
+      figure svg { display: block; width: 100%; height: auto; }
+      figure img { display: block; width: 100%; height: auto; }
+      figcaption {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        padding: 10px 16px;
+        border-top: 1px solid var(--rule-soft);
+        background: var(--paper-edge);
+      }
+      figcaption .fig-num {
+        color: var(--accent);
+        margin-right: 10px;
+        font-weight: 600;
+      }
+
+      /* ─── N-column concept cards ─── */
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin: 20px 0 18px;
+      }
+      .cards.cols-2 { grid-template-columns: repeat(2, 1fr); }
+      .cards.cols-4 { grid-template-columns: repeat(4, 1fr); }
+      .card {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 16px 14px;
+      }
+      .card-icon {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .card-name {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 17px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .card-where {
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-style: italic;
+        margin-bottom: 10px;
+      }
+      .card-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+
+      /* tone variants for cards */
+      .card.tone-a .card-icon { color: var(--brain); }
+      .card.tone-b .card-icon { color: var(--hands); }
+      .card.tone-c .card-icon { color: var(--session); }
+
+      /* ─── Buttons / Inputs (for interactive sections) ─── */
+      .btn {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 8px 14px;
+        background: #fff;
+        color: var(--ink);
+        border: 1px solid var(--rule);
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn:hover { background: var(--paper-edge); }
+      .btn.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .btn.primary:hover { background: #5a87a4; }
+
+      input[type="text"], input[type="email"], textarea, select {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 14px;
+        padding: 8px 12px;
+        background: #fff;
+        border: 1px solid var(--rule);
+        color: var(--ink);
+        width: 100%;
+        margin-bottom: 10px;
+      }
+      input:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      /* ─── Footer ─── */
+      footer {
+        margin-top: 80px;
+        padding-top: 24px;
+        border-top: 1px solid var(--rule);
+        font-size: 12px;
+        color: var(--ink-faint);
+      }
+      footer h4 {
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        margin-bottom: 10px;
+        color: var(--ink-soft);
+      }
+      footer ul { list-style: none; margin-left: 0; }
+      footer li { margin-bottom: 4px; }
+
+      .mascot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+
+      @media (max-width: 720px) {
+        body { padding: 32px 16px 64px; }
+        .doc-title { font-size: 26px; }
+        .cards, .cards.cols-2, .cards.cols-4 { grid-template-columns: 1fr; }
+        .doc-meta { flex-wrap: wrap; gap: 12px; }
+      }
+    </style>
+  </head>
+  <body>
+    <article class="doc">
+      <header class="doc-header">
+        <div class="doc-eyebrow"><span class="mascot"></span>Blog New · Deployment Memo</div>
+        <h1 class="doc-title">Blog New DOH 发布链路复盘</h1>
+        <p class="doc-subtitle">从旧 Next.js 博客，到静态文章、动态索引、Docker SSR、Nginx 分发和一条命令发布。</p>
+        <div class="doc-meta">
+          <span>DATE · 2026-07-02</span>
+          <span>CATEGORY · blog</span>
+          <span>STATUS · SHIPPED</span>
+        </div>
+      </header>
+
+      <div class="tldr">
+        <div class="tldr-label">TL;DR</div>
+        今天完成了 blog-new 的核心改造：文章页变成单文件静态 HTML，首页和分类页由 Vite + React SSR 服务实时扫描目录生成，Nginx 负责路径分发，Docker 承载 SSR 服务，旧博客 39 篇文章迁移到新样式，并新增 <code>article-to-html-doh</code> Skill，实现 <code>doh --c category</code> 直接生成并推送文章到服务器。
+      </div>
+
+      <section>
+        <h2><span class="num">01</span>目标变化</h2>
+        <p>最初的问题不是“怎么再搭一个博客”，而是“怎么让 AI 总结后的内容尽快出现在网站上”。旧仓库是一个较重的 Next.js 博客，发布一篇文章需要走 GitHub push、CI、Docker 构建和部署，这对高频写作太慢。</p>
+        <p>新的目标被收敛成四点：不做数据库，不做 CMS，不依赖 GitHub CI 发布文章，不把文章发布变成前端工程流程。最终选择的是：AI 生成完整 HTML，上传到服务器静态目录，Nginx 直接托管文章文件。</p>
+        <div class="callout">
+          <div class="callout-label">DECISION</div>
+          文章页不是应用页面，而是可独立访问、可直接备份、可由任何 AI 客户端生成的单文件 HTML。
+        </div>
+      </section>
+
+      <section>
+        <h2><span class="num">02</span>仓库从静态发布器变成动态索引服务</h2>
+        <p>第一版 blog-new 是零依赖静态发布器，使用 <code>npm run new</code> 生成文章、维护 <code>posts.json</code>、重建首页，再用 <code>rsync</code> 发布。但这仍然意味着发布文章要执行 npm 命令，也意味着首页需要被重新生成和上传。</p>
+        <p>后来调整为更符合目标的结构：Skill 只上传单篇文章 HTML，首页不发布。首页和分类页改成运行时扫描文件系统，由 Node SSR 动态渲染。</p>
+        <table>
+          <thead>
+            <tr><th>阶段</th><th>方式</th><th>问题</th><th>结果</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>初版</td><td><code>npm run new</code> + <code>posts.json</code></td><td>仍然像工程发布</td><td>废弃为主链路</td></tr>
+            <tr><td>目标版</td><td>Skill 上传单篇 HTML</td><td>首页需要自动发现文章</td><td>引入 SSR 索引服务</td></tr>
+            <tr><td>当前版</td><td>静态文章 + 动态索引</td><td>需要常驻服务</td><td>用 Docker 跑 Node SSR</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2><span class="num">03</span>最终路径约定</h2>
+        <p>博客作为主站下的 <code>/blog/</code> 模块存在，根路径留给未来主站或其他业务。文章路径采用一级目录表达分类，文件名前缀表达日期。</p>
+        <pre><code>/blog/                                  -> SSR 首页
+/blog/&lt;category&gt;/                       -> SSR 分类页
+/blog/&lt;category&gt;/&lt;YYYY-MM-DD-slug&gt;.html -> Nginx 静态文章</code></pre>
+        <p>这个规则让 Skill 不需要维护索引文件，也不需要知道首页如何生成。它只需要稳定地产出一个 HTML 文件，并上传到正确目录。</p>
+      </section>
+
+      <section>
+        <h2><span class="num">04</span>Vite + React SSR 首页</h2>
+        <p>首页技术栈选择了 Vite + React SSR，而不是回到 Next.js。原因是这里需要的不是完整 Web App 框架，而是一个很薄的索引渲染器：扫描目录、读取 HTML 元信息、输出首页和分类页。</p>
+        <p>SSR 服务扫描 <code>BLOG_CONTENT_DIR</code>，跳过 <code>index.html</code>，从每个 HTML 文件中读取 <code>&lt;title&gt;</code>、<code>&lt;meta name="description"&gt;</code>、路径分类和日期，然后渲染列表。</p>
+        <div class="cards">
+          <div class="card tone-a">
+            <div class="card-icon">STATIC</div>
+            <div class="card-name">文章页</div>
+            <div class="card-where">Nginx 直接返回</div>
+            <div class="card-desc">每篇文章是完整 HTML，不依赖 Node 服务渲染。</div>
+          </div>
+          <div class="card tone-b">
+            <div class="card-icon">SSR</div>
+            <div class="card-name">首页 / 分类页</div>
+            <div class="card-where">Docker 内 Node 服务</div>
+            <div class="card-desc">访问时扫描文章目录，实时生成索引。</div>
+          </div>
+          <div class="card tone-c">
+            <div class="card-icon">SKILL</div>
+            <div class="card-name">发布入口</div>
+            <div class="card-where">AI 客户端触发</div>
+            <div class="card-desc">生成 HTML 后直接上传到服务器文章目录。</div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2><span class="num">05</span>旧博客迁移</h2>
+        <p>旧仓库的文章集中在 <code>data/blog/YYYY/*.md</code>。迁移脚本读取 frontmatter，跳过 <code>draft: true</code>，使用第一个 tag 作为分类目录，把 Markdown 转成 paper proposal 风格的单文件 HTML。</p>
+        <p>迁移结果是 39 篇已发布文章进入新目录，3 篇草稿被跳过。旧文章里的本地图片被内联为 <code>data:image</code>，这样新站点不再依赖旧仓库的静态资源目录。</p>
+        <pre><code>npm run migrate:old
+# Migrated 39 posts, skipped 3.</code></pre>
+        <p>这一步之后，首页 SSR 能扫描到 40 篇文章：39 篇旧文加上最早的 Blog New 启动记录。</p>
+      </section>
+
+      <section>
+        <h2><span class="num">06</span>服务器部署</h2>
+        <p>服务器是新买的 Ubuntu 26.04 64 位云主机。部署方式是 Nginx 做总入口，Docker 只跑 blog-index 这个 SSR 服务。静态文章目录在宿主机上，容器通过只读 volume 挂载。</p>
+        <pre><code>/opt/blog-new  -> 项目代码和 Docker 配置
+/var/www/blog  -> 文章 HTML 静态目录
+127.0.0.1:3436 -> Docker 中的 SSR 服务</code></pre>
+        <p>Nginx 分发规则如下：<code>/blog/*.html</code> 直接走静态文件，<code>/blog/</code> 和 <code>/blog/&lt;category&gt;/</code> 反向代理到 Node SSR。</p>
+        <pre><code>location ~ ^/blog/(.+.html)$ {
+  alias /var/www/blog/$1;
+  default_type text/html;
+}
+
+location /blog/ {
+  proxy_pass http://127.0.0.1:3436;
+}</code></pre>
+        <div class="callout warn">
+          <div class="callout-label">DEPLOY NOTE</div>
+          服务器在国内，Docker Hub 拉镜像容易超时，因此 Docker 配置了 registry mirrors。远端 npm 在容器构建中出现过 npm 自身异常，最终改成“本地构建 dist + 容器只运行”的模式。
+        </div>
+      </section>
+
+      <section>
+        <h2><span class="num">07</span>Docker 构建策略调整</h2>
+        <p>最初 Dockerfile 尝试在服务器构建阶段执行 <code>npm ci</code> 和 <code>npm run build</code>。实际部署时遇到 npm 的 <code>Exit handler never called</code> 异常，导致构建失败。</p>
+        <p>最后的处理是让本地机器负责构建 <code>dist/server</code>，并把生产运行所需的 <code>react</code>、<code>react-dom</code>、<code>scheduler</code> 一起同步到服务器构建上下文。生产容器不再访问 npm registry，只复制本地构建产物并启动 Node 服务。</p>
+        <p>这让部署更确定：服务器只负责运行镜像，不负责解析前端依赖。</p>
+      </section>
+
+      <section>
+        <h2><span class="num">08</span>DOH Skill</h2>
+        <p>最后把文章生成和发布封装成新的 Codex Skill：<code>article-to-html-doh</code>。它复用原 article-to-html 的 paper proposal 设计系统，但触发规则被严格限制为请求中包含 <code>/doh</code> 或独立 <code>doh</code>。</p>
+        <p>分类由用户请求里的 <code>--c &lt;category&gt;</code> 指定。例如这篇文章的触发方式就是：</p>
+        <pre><code>doh --c blog 总结下今天的流程发一篇详细的blog吧</code></pre>
+        <p>发布脚本会从 HTML 的标题和日期生成文件名，上传到：</p>
+        <pre><code>/var/www/blog/&lt;category&gt;/&lt;YYYY-MM-DD-slug&gt;.html</code></pre>
+        <p>真实服务器配置放在 Skill 自己的私有 <code>.env</code>，仓库里只保留 <code>.env.example</code>。这样 Skill 可复用，敏感信息不进入 GitHub。</p>
+      </section>
+
+      <section>
+        <h2><span class="num">09</span>当前发布链路</h2>
+        <p>现在发布文章的链路已经压缩到一条意图明确的 AI 指令：</p>
+        <pre><code>doh --c blog 写一篇文章...</code></pre>
+        <ol>
+          <li><strong>AI 生成文章。</strong> 使用 paper proposal 模板，输出完整 HTML。</li>
+          <li><strong>Skill 解析分类。</strong> 优先读取 <code>--c</code> 参数。</li>
+          <li><strong>脚本上传文件。</strong> 通过 rsync 把 HTML 上传到服务器目录。</li>
+          <li><strong>Nginx 立即可见。</strong> 文章页不经过构建、不经过首页发布。</li>
+          <li><strong>SSR 自动索引。</strong> 首页和分类页下一次访问时自动扫描到新文章。</li>
+        </ol>
+      </section>
+
+      <section>
+        <h2><span class="num">10</span>后续备份策略</h2>
+        <p>因为文章最终直接写入服务器，如果服务器磁盘出问题，理论上可能丢文章。已确认的备份方向是让服务器每天把 <code>/var/www/blog</code> 同步回 GitHub 主仓库的 <code>public/</code>，作为兜底备份。</p>
+        <p>这不影响日常发布速度：平时 Skill 只管上传单篇 HTML，定时任务在后台做备份。</p>
+      </section>
+
+      <footer>
+        <h4>Result</h4>
+        <ul>
+          <li>公网首页：<a href="http://47.101.44.162/blog/">http://47.101.44.162/blog/</a></li>
+          <li>文章路径规范：<code>/blog/&lt;category&gt;/&lt;YYYY-MM-DD-slug&gt;.html</code></li>
+          <li>发布入口：<code>doh --c &lt;category&gt;</code></li>
+        </ul>
+      </footer>
+    </article>
+  </body>
+</html>
