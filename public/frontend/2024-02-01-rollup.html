@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rollup</title>
+    <meta name="description" content="Rollup讲解 主要以插件的形式  具体config请查阅官网" />
+    <style>
+      :root {
+        --paper: #f7f7f5;
+        --paper-edge: #efefea;
+        --ink: #1a1a1a;
+        --ink-soft: #4a4a4a;
+        --ink-faint: #7a7a7a;
+        --rule: #d8d8d2;
+        --rule-soft: #e8e8e2;
+        --accent: #6f9bb8;
+        --accent-soft: #d9e6f0;
+        --accent-faint: #eef4f8;
+        --warn: #b88a4a;
+        --warn-soft: #f5ecdc;
+        --danger: #a05050;
+        --code-bg: #ececea;
+
+        /* Semantic palette for three-layer cards. Rename freely
+           (e.g. --layer-a / --layer-b / --layer-c) when the three
+           layers in the doc are not brain/hands/session. */
+        --brain: #6f9bb8;
+        --brain-bg: #eef4f8;
+        --hands: #b88a4a;
+        --hands-bg: #f5ecdc;
+        --session: #6b7560;
+        --session-bg: #ecede5;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { font-size: 16px; }
+
+      /* Font stacks include both English serifs/monospace and CJK
+         fallbacks so the same template renders cleanly for English
+         or Chinese source content. */
+      body {
+        font-family:
+          ui-serif, "Charter", "Iowan Old Style", "Source Serif Pro", Georgia,
+          "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+        background: var(--paper);
+        color: var(--ink);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        padding: 64px 24px 96px;
+      }
+
+      .doc { max-width: 840px; margin: 0 auto; }
+
+      /* ─── Header ─── */
+      .doc-header {
+        border-bottom: 1px solid var(--rule);
+        padding-bottom: 28px;
+        margin-bottom: 48px;
+      }
+      .doc-eyebrow {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 14px;
+      }
+      .doc-title {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 34px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+      }
+      .doc-subtitle {
+        font-size: 16px;
+        color: var(--ink-soft);
+        margin-top: 10px;
+        font-style: italic;
+      }
+      .doc-meta {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        color: var(--ink-faint);
+        margin-top: 18px;
+        display: flex;
+        gap: 24px;
+      }
+
+      /* ─── TL;DR ─── */
+      .tldr {
+        background: var(--accent-faint);
+        border-left: 2px solid var(--accent);
+        padding: 20px 24px;
+        margin-bottom: 56px;
+        font-size: 15px;
+      }
+      .tldr-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      /* ─── Sections ─── */
+      section { margin-bottom: 56px; }
+      h2 {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.005em;
+        margin-bottom: 18px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--rule);
+      }
+      h2 .num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-weight: 500;
+        margin-right: 14px;
+        letter-spacing: 0.05em;
+      }
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 28px 0 10px;
+      }
+      h4 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 22px 0 8px;
+      }
+      p { margin-bottom: 14px; }
+      p + p { margin-top: -2px; }
+      a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+      a:hover { border-bottom-color: var(--accent); }
+      code {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+        background: var(--code-bg);
+        padding: 1px 5px;
+        border-radius: 2px;
+      }
+      pre {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12.5px;
+        line-height: 1.55;
+        background: var(--code-bg);
+        padding: 14px 18px;
+        margin: 14px 0 18px;
+        overflow-x: auto;
+        border-left: 2px solid var(--rule);
+      }
+      pre code { background: transparent; padding: 0; }
+      ul, ol { margin: 8px 0 16px 22px; }
+      li { margin-bottom: 6px; }
+      strong { font-weight: 600; }
+      em { color: var(--ink-soft); }
+      blockquote {
+        border-left: 2px solid var(--rule);
+        padding: 4px 0 4px 18px;
+        margin: 14px 0 18px;
+        color: var(--ink-soft);
+        font-style: italic;
+      }
+
+      /* ─── Tables ─── */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 14px 0 18px;
+        font-size: 14px;
+      }
+      th, td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--rule-soft);
+        vertical-align: top;
+      }
+      th {
+        font-weight: 600;
+        font-family:
+          ui-sans-serif, system-ui,
+          "PingFang SC", "Hiragino Sans GB", sans-serif;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--ink-faint);
+        border-bottom: 1px solid var(--rule);
+      }
+      tbody tr:hover { background: rgba(0,0,0,0.015); }
+      td.num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+      }
+      td.accent { color: var(--accent); font-weight: 500; }
+
+      /* ─── Callouts ─── */
+      .callout {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 18px;
+        margin: 16px 0 20px;
+      }
+      .callout.warn {
+        border-color: #e6d4a8;
+        background: var(--warn-soft);
+      }
+      .callout.cite {
+        border-left: 2px solid var(--accent);
+        border-top: none; border-right: none; border-bottom: none;
+        background: var(--accent-faint);
+        padding-left: 22px;
+        font-style: italic;
+      }
+      .callout-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .callout.warn .callout-label { color: var(--warn); }
+      .cite-source {
+        font-style: normal;
+        font-size: 12px;
+        color: var(--ink-faint);
+        margin-top: 10px;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+      }
+
+      /* ─── Figure / Diagram ─── */
+      figure {
+        margin: 28px 0 32px;
+        border: 1px solid var(--rule);
+        background: #fff;
+      }
+      figure svg { display: block; width: 100%; height: auto; }
+      figure img { display: block; width: 100%; height: auto; }
+      figcaption {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        padding: 10px 16px;
+        border-top: 1px solid var(--rule-soft);
+        background: var(--paper-edge);
+      }
+      figcaption .fig-num {
+        color: var(--accent);
+        margin-right: 10px;
+        font-weight: 600;
+      }
+
+      /* ─── N-column concept cards ─── */
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin: 20px 0 18px;
+      }
+      .cards.cols-2 { grid-template-columns: repeat(2, 1fr); }
+      .cards.cols-4 { grid-template-columns: repeat(4, 1fr); }
+      .card {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 16px 14px;
+      }
+      .card-icon {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .card-name {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 17px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .card-where {
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-style: italic;
+        margin-bottom: 10px;
+      }
+      .card-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+
+      /* tone variants for cards */
+      .card.tone-a .card-icon { color: var(--brain); }
+      .card.tone-b .card-icon { color: var(--hands); }
+      .card.tone-c .card-icon { color: var(--session); }
+
+      /* ─── Buttons / Inputs (for interactive sections) ─── */
+      .btn {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 8px 14px;
+        background: #fff;
+        color: var(--ink);
+        border: 1px solid var(--rule);
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn:hover { background: var(--paper-edge); }
+      .btn.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .btn.primary:hover { background: #5a87a4; }
+
+      input[type="text"], input[type="email"], textarea, select {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 14px;
+        padding: 8px 12px;
+        background: #fff;
+        border: 1px solid var(--rule);
+        color: var(--ink);
+        width: 100%;
+        margin-bottom: 10px;
+      }
+      input:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      /* ─── Footer ─── */
+      footer {
+        margin-top: 80px;
+        padding-top: 24px;
+        border-top: 1px solid var(--rule);
+        font-size: 12px;
+        color: var(--ink-faint);
+      }
+      footer h4 {
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        margin-bottom: 10px;
+        color: var(--ink-soft);
+      }
+      footer ul { list-style: none; margin-left: 0; }
+      footer li { margin-bottom: 4px; }
+
+      .mascot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+
+      @media (max-width: 720px) {
+        body { padding: 32px 16px 64px; }
+        .doc-title { font-size: 26px; }
+        .cards, .cards.cols-2, .cards.cols-4 { grid-template-columns: 1fr; }
+        .doc-meta { flex-wrap: wrap; gap: 12px; }
+      }
+    
+
+      .source-note {
+        border-top: 1px solid var(--rule);
+        color: var(--ink-faint);
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        margin-top: 56px;
+        padding-top: 14px;
+        text-transform: uppercase;
+      }
+</style>
+  </head>
+  <body>
+    <article class="doc">
+      <header class="doc-header">
+        <div class="doc-eyebrow"><span class="mascot"></span>Frontend · Migrated Article</div>
+        <h1 class="doc-title">Rollup</h1>
+        <p class="doc-subtitle">Rollup讲解 主要以插件的形式  具体config请查阅官网</p>
+        <div class="doc-meta">
+          <span>DATE · 2024-02-01</span>
+          <span>TAGS · Frontend, Pack, Rollup</span>
+          <span>SOURCE · old blog</span>
+        </div>
+      </header>
+
+      <div class="tldr">
+        <div class="tldr-label">TL;DR</div>
+        Rollup讲解 主要以插件的形式  具体config请查阅官网
+      </div>
+
+      <h1>Plugin</h1>
+<section>
+<h2><span class="num">01</span>Properties</h2>
+<p>插件的一些基本属性</p>
+<p>name: 插件名称 version: 插件版本</p>
+</section>
+<section>
+<h2><span class="num">02</span>Build Hooks</h2>
+<p>构建过程中会有在各个时期执行的构建hook  我们可以改变hook从而改变构建过程</p>
+<p>hook类型分为函数或者对象 (一般使用对象)</p>
+<h3>hook类型</h3>
+<p>(注意 是多个同类型hook 才会有顺序定义)</p>
+<ul>
+  <li>async 返回promise  不然就是sync</li>
+  <li>first 顺序执行 直到有返回值 而不是<code>null</code> or <code>undefined</code>.</li>
+  <li>sequential 多个插件实现了同一个钩子时,按照指定的顺序依次执行,一个钩子是异步的，那么后续的同类钩子会等待当前钩子解析完成后再继续执行。</li>
+  <li>parallel 类似于顺序执行，然而，如果一个钩子是异步的，后续的同类钩子会并行执行，不会等待当前钩子完成。</li>
+</ul>
+<h3>对象属性</h3>
+<p>order: &quot;pre&quot; | &quot;post&quot; | null 控制使用相同hook的plugin执行顺序 sequential: boolean  parallel类型的hook开启 等待前面异步执行完毕  执行自己 后续继续异步</p>
+<p>各种hook:<a href="https://rollupjs.org/plugin-development/#moduleparsed">link</a></p>
+<ul>
+  <li><a href="https://rollupjs.org/plugin-development/#buildend &quot;buildEnd&quot;">buildEnd</a> (async, parallel)构建结束 输出文件之前<a href="https://rollupjs.org/plugin-development/#outputoptions"><code>outputOptions</code></a>  构建中的错误会传入该hook</li>
+  <li><a href="https://rollupjs.org/plugin-development/#buildstart &quot;buildStart&quot;">buildStart</a> (async, parallel) 构建开始 <a href="https://rollupjs.org/plugin-development/#options"><code>options</code></a> 之后 处理传入的options</li>
+  <li><a href="https://rollupjs.org/plugin-development/#closewatcher &quot;closeWatcher&quot;">closeWatcher</a></li>
+  <li><a href="https://rollupjs.org/plugin-development/#load &quot;load&quot;">load</a>（async, first） 通过<a href="https://rollupjs.org/plugin-development/#resolveid"><code>resolveId</code></a> or <a href="https://rollupjs.org/plugin-development/#resolvedynamicimport"><code>resolveDynamicImport</code></a> 拿到文件  load吐出内容，涉及ast map 摇树 meta</li>
+  <li><a href="https://rollupjs.org/plugin-development/#moduleparsed &quot;moduleParsed&quot;">moduleParsed</a> （async, parallel）每次有模块被完全解析时触发 （后面还有import模块时 进入resolved）</li>
+  <li><a href="https://rollupjs.org/plugin-development/#onlog &quot;onLog&quot;">onLog</a> （sync, sequential）处理日志  return false对应日志将被过滤 不然穿到下个plugin</li>
+  <li><a href="https://rollupjs.org/plugin-development/#options &quot;options&quot;">options</a> （async, sequential） 空竹options 返回null 啥都不变 只读使用buildStart</li>
+  <li><a href="https://rollupjs.org/plugin-development/#resolvedynamicimport &quot;resolveDynamicImport&quot;">resolveDynamicImport</a> (async, first) 动态解析 可以启用外部依赖 或者依然- <a href="https://rollupjs.org/plugin-development/#resolveid &quot;resolveId&quot;">resolveId</a> 解析</li>
+  <li><a href="https://rollupjs.org/plugin-development/#resolveid &quot;resolveId&quot;">resolveId</a> (async, first)  解析import 使用</li>
+  <li><a href="https://rollupjs.org/plugin-development/#shouldtransformcachedmodule &quot;shouldTransformCachedModule&quot;">shouldTransformCachedM</a></li>
+  <li><a href="https://rollupjs.org/plugin-development/#transform &quot;transform&quot;">transform</a> (async, sequential)  转换</li>
+  <li><a href="https://rollupjs.org/plugin-development/#watchchange &quot;watchChange&quot;">watchChange</a></li>
+</ul>
+<p>注意整体build构建流程为 入口resolve 两次 =&gt;load =&gt; transform ,入口页面所有import的文件 resolve(异步),完成后load(该页面的所有import文件) ,完成后 transform(该页面的所有import文件)，解析import文件 分析模块 继续 resolve =&gt;load =&gt; transform (注意 此时是多个分析模块并行所以resolve =&gt;load =&gt; transform多条 )</p>
+<p>多个入口 意味着多个bundle ，load过程可能由于其他入口打包产出的cache也可以复用 chunk也会做到共用 writebundle 会被触发多次 但是closebundle只有一次</p>
+<p>this.build不同  已是一个新流程了</p>
+</section>
+<section>
+<h2><span class="num">03</span>Output Generation Hooks</h2>
+<p>输出生成钩子  相比构建钩子(解析模块、生成代码)  ，该钩子主要用于生成最终输出文件之前或之后执行自定义操作</p>
+<p>这些hook会被<code>bundle.generate(outputOptions)</code> or <code>bundle.write(outputOptions)</code>. 分别调用 <code>bundle.generate(outputOptions)</code>: 返回一个包含生成的代码的对象 与文件系统无关 <code>bundle.write(outputOptions)</code>： shen cshenc</p>
+<h1>Rollup</h1>
+<p>Rollup 是一个用于 JavaScript 的模块打包工具，它将小的代码片段编译成更大、更复杂的代码，例如库或应用程序</p>
+<p>采用ES6 版本中包含的新标准化代码模块格式</p>
+<figure>
+  <img src="/blog/static/images/blog/202402/rollup/build.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 1</span>tu</figcaption>
+</figure>
+<figure>
+  <img src="/blog/static/images/blog/202402/rollup/output.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 2</span>tu</figcaption>
+</figure>
+</section>
+
+      <div class="source-note">Migrated from data/blog/202402/Rollup.md</div>
+    </article>
+  </body>
+</html>

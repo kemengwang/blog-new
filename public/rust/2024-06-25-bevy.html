@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bevy</title>
+    <meta name="description" content="一个基于RUST的游戏框架Bevy （持续跟新中）" />
+    <style>
+      :root {
+        --paper: #f7f7f5;
+        --paper-edge: #efefea;
+        --ink: #1a1a1a;
+        --ink-soft: #4a4a4a;
+        --ink-faint: #7a7a7a;
+        --rule: #d8d8d2;
+        --rule-soft: #e8e8e2;
+        --accent: #6f9bb8;
+        --accent-soft: #d9e6f0;
+        --accent-faint: #eef4f8;
+        --warn: #b88a4a;
+        --warn-soft: #f5ecdc;
+        --danger: #a05050;
+        --code-bg: #ececea;
+
+        /* Semantic palette for three-layer cards. Rename freely
+           (e.g. --layer-a / --layer-b / --layer-c) when the three
+           layers in the doc are not brain/hands/session. */
+        --brain: #6f9bb8;
+        --brain-bg: #eef4f8;
+        --hands: #b88a4a;
+        --hands-bg: #f5ecdc;
+        --session: #6b7560;
+        --session-bg: #ecede5;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { font-size: 16px; }
+
+      /* Font stacks include both English serifs/monospace and CJK
+         fallbacks so the same template renders cleanly for English
+         or Chinese source content. */
+      body {
+        font-family:
+          ui-serif, "Charter", "Iowan Old Style", "Source Serif Pro", Georgia,
+          "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+        background: var(--paper);
+        color: var(--ink);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        padding: 64px 24px 96px;
+      }
+
+      .doc { max-width: 840px; margin: 0 auto; }
+
+      /* ─── Header ─── */
+      .doc-header {
+        border-bottom: 1px solid var(--rule);
+        padding-bottom: 28px;
+        margin-bottom: 48px;
+      }
+      .doc-eyebrow {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 14px;
+      }
+      .doc-title {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 34px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+      }
+      .doc-subtitle {
+        font-size: 16px;
+        color: var(--ink-soft);
+        margin-top: 10px;
+        font-style: italic;
+      }
+      .doc-meta {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        color: var(--ink-faint);
+        margin-top: 18px;
+        display: flex;
+        gap: 24px;
+      }
+
+      /* ─── TL;DR ─── */
+      .tldr {
+        background: var(--accent-faint);
+        border-left: 2px solid var(--accent);
+        padding: 20px 24px;
+        margin-bottom: 56px;
+        font-size: 15px;
+      }
+      .tldr-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      /* ─── Sections ─── */
+      section { margin-bottom: 56px; }
+      h2 {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.005em;
+        margin-bottom: 18px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--rule);
+      }
+      h2 .num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-weight: 500;
+        margin-right: 14px;
+        letter-spacing: 0.05em;
+      }
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 28px 0 10px;
+      }
+      h4 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 22px 0 8px;
+      }
+      p { margin-bottom: 14px; }
+      p + p { margin-top: -2px; }
+      a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+      a:hover { border-bottom-color: var(--accent); }
+      code {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+        background: var(--code-bg);
+        padding: 1px 5px;
+        border-radius: 2px;
+      }
+      pre {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12.5px;
+        line-height: 1.55;
+        background: var(--code-bg);
+        padding: 14px 18px;
+        margin: 14px 0 18px;
+        overflow-x: auto;
+        border-left: 2px solid var(--rule);
+      }
+      pre code { background: transparent; padding: 0; }
+      ul, ol { margin: 8px 0 16px 22px; }
+      li { margin-bottom: 6px; }
+      strong { font-weight: 600; }
+      em { color: var(--ink-soft); }
+      blockquote {
+        border-left: 2px solid var(--rule);
+        padding: 4px 0 4px 18px;
+        margin: 14px 0 18px;
+        color: var(--ink-soft);
+        font-style: italic;
+      }
+
+      /* ─── Tables ─── */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 14px 0 18px;
+        font-size: 14px;
+      }
+      th, td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--rule-soft);
+        vertical-align: top;
+      }
+      th {
+        font-weight: 600;
+        font-family:
+          ui-sans-serif, system-ui,
+          "PingFang SC", "Hiragino Sans GB", sans-serif;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--ink-faint);
+        border-bottom: 1px solid var(--rule);
+      }
+      tbody tr:hover { background: rgba(0,0,0,0.015); }
+      td.num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+      }
+      td.accent { color: var(--accent); font-weight: 500; }
+
+      /* ─── Callouts ─── */
+      .callout {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 18px;
+        margin: 16px 0 20px;
+      }
+      .callout.warn {
+        border-color: #e6d4a8;
+        background: var(--warn-soft);
+      }
+      .callout.cite {
+        border-left: 2px solid var(--accent);
+        border-top: none; border-right: none; border-bottom: none;
+        background: var(--accent-faint);
+        padding-left: 22px;
+        font-style: italic;
+      }
+      .callout-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .callout.warn .callout-label { color: var(--warn); }
+      .cite-source {
+        font-style: normal;
+        font-size: 12px;
+        color: var(--ink-faint);
+        margin-top: 10px;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+      }
+
+      /* ─── Figure / Diagram ─── */
+      figure {
+        margin: 28px 0 32px;
+        border: 1px solid var(--rule);
+        background: #fff;
+      }
+      figure svg { display: block; width: 100%; height: auto; }
+      figure img { display: block; width: 100%; height: auto; }
+      figcaption {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        padding: 10px 16px;
+        border-top: 1px solid var(--rule-soft);
+        background: var(--paper-edge);
+      }
+      figcaption .fig-num {
+        color: var(--accent);
+        margin-right: 10px;
+        font-weight: 600;
+      }
+
+      /* ─── N-column concept cards ─── */
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin: 20px 0 18px;
+      }
+      .cards.cols-2 { grid-template-columns: repeat(2, 1fr); }
+      .cards.cols-4 { grid-template-columns: repeat(4, 1fr); }
+      .card {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 16px 14px;
+      }
+      .card-icon {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .card-name {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 17px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .card-where {
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-style: italic;
+        margin-bottom: 10px;
+      }
+      .card-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+
+      /* tone variants for cards */
+      .card.tone-a .card-icon { color: var(--brain); }
+      .card.tone-b .card-icon { color: var(--hands); }
+      .card.tone-c .card-icon { color: var(--session); }
+
+      /* ─── Buttons / Inputs (for interactive sections) ─── */
+      .btn {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 8px 14px;
+        background: #fff;
+        color: var(--ink);
+        border: 1px solid var(--rule);
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn:hover { background: var(--paper-edge); }
+      .btn.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .btn.primary:hover { background: #5a87a4; }
+
+      input[type="text"], input[type="email"], textarea, select {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 14px;
+        padding: 8px 12px;
+        background: #fff;
+        border: 1px solid var(--rule);
+        color: var(--ink);
+        width: 100%;
+        margin-bottom: 10px;
+      }
+      input:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      /* ─── Footer ─── */
+      footer {
+        margin-top: 80px;
+        padding-top: 24px;
+        border-top: 1px solid var(--rule);
+        font-size: 12px;
+        color: var(--ink-faint);
+      }
+      footer h4 {
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        margin-bottom: 10px;
+        color: var(--ink-soft);
+      }
+      footer ul { list-style: none; margin-left: 0; }
+      footer li { margin-bottom: 4px; }
+
+      .mascot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+
+      @media (max-width: 720px) {
+        body { padding: 32px 16px 64px; }
+        .doc-title { font-size: 26px; }
+        .cards, .cards.cols-2, .cards.cols-4 { grid-template-columns: 1fr; }
+        .doc-meta { flex-wrap: wrap; gap: 12px; }
+      }
+    
+
+      .source-note {
+        border-top: 1px solid var(--rule);
+        color: var(--ink-faint);
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        margin-top: 56px;
+        padding-top: 14px;
+        text-transform: uppercase;
+      }
+</style>
+  </head>
+  <body>
+    <article class="doc">
+      <header class="doc-header">
+        <div class="doc-eyebrow"><span class="mascot"></span>Rust · Migrated Article</div>
+        <h1 class="doc-title">Bevy</h1>
+        <p class="doc-subtitle">一个基于RUST的游戏框架Bevy （持续跟新中）</p>
+        <div class="doc-meta">
+          <span>DATE · 2024-06-25</span>
+          <span>TAGS · Rust, Bevy, Game</span>
+          <span>SOURCE · old blog</span>
+        </div>
+      </header>
+
+      <div class="tldr">
+        <div class="tldr-label">TL;DR</div>
+        一个基于RUST的游戏框架Bevy （持续跟新中）
+      </div>
+
+      <section>
+<h2><span class="num">01</span>介绍</h2>
+<p>一个游戏框架  设计模式是ECS 面向数据编程</p>
+</section>
+<section>
+<h2><span class="num">02</span>组成</h2>
+<h3>1、Apps</h3>
+<p>一个app组成主要通过 <code>world</code>, <code>schedule</code>, and <code>runner</code> 三部分组成</p>
+<p>world: 世界 存储我们需要的游戏数据</p>
+<p>schedule: 调度  调度相关的系统 来操作数据</p>
+<p>runner：运行程序  解释调度</p>
+<h3>2、ECS</h3>
+<p>Entity Component System</p>
+<p>一种程序设计模式 面向数据 使用bevy 开发游戏 需要遵循该模式 这种模式可以和面向对象oop对比</p>
+<p><strong>Entities</strong> : 实体 （一个具体的人 一条具体的狗）</p>
+<pre><code data-language="rust">struct Entity(u64);</code></pre>
+<p>Component : 组件 属性、抽象概念 (人有名字 狗也有)</p>
+<pre><code data-language="rust">#[derive(Component)]
+struct Position { x: f32, y: f32 }</code></pre>
+<p>System: 控制实体运行 修改实体状态 添加实例 （实际就是一个函数）</p>
+<pre><code data-language="rust">fn print_position_system(query: Query&lt;&amp;Position&gt;) {
+    for position in &amp;query {
+        println!(&quot;position: {} {}&quot;, position.x, position.y);
+    }
+}</code></pre>
+<p>使用：</p>
+<pre><code data-language="rust">
+// Commands传递一些实例到世界
+
+fn add_people(mut commands: Commands) {
+    commands.spawn((Person, Name(&quot;Elaina Proctor&quot;.to_string())));
+    commands.spawn((Person, Name(&quot;Renzo Hume&quot;.to_string())));
+    commands.spawn((Person, Name(&quot;Zayna Nieves&quot;.to_string())));
+}
+
+fn greet_people(query: Query&lt;&amp;Name, With&lt;Person&gt;&gt;) {
+    for name in &amp;query {
+        println!(&quot;hello {}!&quot;, name.0);
+    }
+}
+fn update_people(mut query: Query&lt;&amp;mut Name, With&lt;Person&gt;&gt;) {
+ // 通用调用时可带参数 query ,从 world拿包含Name的组件的实例，这些实例需要有Person属性
+
+    for mut name in &amp;mut query {
+        if name.0 == &quot;Elaina Proctor&quot; {
+            name.0 = &quot;Elaina Hume&quot;.to_string();
+            break; // We don’t need to change any other names
+        }
+    }
+}
+
+fn main() {
+
+ // 给开始调度Startup添加系统 给loop调度Update 添加hello_world 
+ // (update_people, greet_people)系统 chain使用串联 起他并行
+    App::new()
+        .add_systems(Startup, add_people)
+        .add_systems(Update, (hello_world, (update_people, greet_people).chain()))
+        .run();
+}</code></pre>
+<h3>3、Plugins</h3>
+<p>游戏模块化</p>
+<pre><code data-language="rust">impl Plugin for HelloPlugin {
+    fn build(&amp;self, app: &amp;mut App) {
+        app.add_systems(Startup, add_people)
+            .add_systems(Update, (hello_world, greet_people));
+    }
+}
+
+
+fn main() {
+    App::new()
+        .add_plugins((DefaultPlugins, HelloPlugin))
+        .run();
+}</code></pre>
+<h3>4、Resources</h3>
+<p>基本都能用 Entity Component 来表达数据   但还有写全局唯一标识的数据</p>
+<p>比如:</p>
+<ul>
+  <li>运行时间</li>
+  <li>资产集合(声音，纹理，网格)</li>
+  <li>渲染器</li>
+</ul>
+<pre><code data-language="rust">#[derive(Resource)]
+struct GreetTimer(Timer);
+
+fn greet_people(
+    time: Res&lt;Time&gt;,
+    mut timer: ResMut&lt;GreetTimer&gt;,
+    query: Query&lt;&amp;Name, With&lt;Person&gt;&gt;
+) {
+    // time.delta()时间资源每次刷新的间隔
+    // tick前进计时器 just_finished如果到了顶 返回true
+    if timer.0.tick(time.delta()).just_finished() {
+        for name in &amp;query {
+            println!(&quot;hello {}!&quot;, name.0);
+        }
+    }
+}
+
+
+impl Plugin for HelloPlugin {
+    fn build(&amp;self, app: &amp;mut App) {
+     // 添加资源 
+        app.insert_resource(GreetTimer(Timer::from_seconds(2.0, TimerMode::Repeating)))
+            .add_systems(Startup, add_people)
+            .add_systems(Update, greet_people);
+    }
+}</code></pre>
+</section>
+<section>
+<h2><span class="num">03</span>2D渲染</h2>
+</section>
+
+      <div class="source-note">Migrated from data/blog/202406/Bevy.md</div>
+    </article>
+  </body>
+</html>

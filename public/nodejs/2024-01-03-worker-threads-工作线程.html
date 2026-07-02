@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Worker_threads_工作线程</title>
+    <meta name="description" content="讲解Nodejs中子线程相关内容，这是比较细致的讲解，有具体方法调用" />
+    <style>
+      :root {
+        --paper: #f7f7f5;
+        --paper-edge: #efefea;
+        --ink: #1a1a1a;
+        --ink-soft: #4a4a4a;
+        --ink-faint: #7a7a7a;
+        --rule: #d8d8d2;
+        --rule-soft: #e8e8e2;
+        --accent: #6f9bb8;
+        --accent-soft: #d9e6f0;
+        --accent-faint: #eef4f8;
+        --warn: #b88a4a;
+        --warn-soft: #f5ecdc;
+        --danger: #a05050;
+        --code-bg: #ececea;
+
+        /* Semantic palette for three-layer cards. Rename freely
+           (e.g. --layer-a / --layer-b / --layer-c) when the three
+           layers in the doc are not brain/hands/session. */
+        --brain: #6f9bb8;
+        --brain-bg: #eef4f8;
+        --hands: #b88a4a;
+        --hands-bg: #f5ecdc;
+        --session: #6b7560;
+        --session-bg: #ecede5;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { font-size: 16px; }
+
+      /* Font stacks include both English serifs/monospace and CJK
+         fallbacks so the same template renders cleanly for English
+         or Chinese source content. */
+      body {
+        font-family:
+          ui-serif, "Charter", "Iowan Old Style", "Source Serif Pro", Georgia,
+          "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+        background: var(--paper);
+        color: var(--ink);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        padding: 64px 24px 96px;
+      }
+
+      .doc { max-width: 840px; margin: 0 auto; }
+
+      /* ─── Header ─── */
+      .doc-header {
+        border-bottom: 1px solid var(--rule);
+        padding-bottom: 28px;
+        margin-bottom: 48px;
+      }
+      .doc-eyebrow {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 14px;
+      }
+      .doc-title {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 34px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+      }
+      .doc-subtitle {
+        font-size: 16px;
+        color: var(--ink-soft);
+        margin-top: 10px;
+        font-style: italic;
+      }
+      .doc-meta {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        color: var(--ink-faint);
+        margin-top: 18px;
+        display: flex;
+        gap: 24px;
+      }
+
+      /* ─── TL;DR ─── */
+      .tldr {
+        background: var(--accent-faint);
+        border-left: 2px solid var(--accent);
+        padding: 20px 24px;
+        margin-bottom: 56px;
+        font-size: 15px;
+      }
+      .tldr-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      /* ─── Sections ─── */
+      section { margin-bottom: 56px; }
+      h2 {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.005em;
+        margin-bottom: 18px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--rule);
+      }
+      h2 .num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-weight: 500;
+        margin-right: 14px;
+        letter-spacing: 0.05em;
+      }
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 28px 0 10px;
+      }
+      h4 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 22px 0 8px;
+      }
+      p { margin-bottom: 14px; }
+      p + p { margin-top: -2px; }
+      a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+      a:hover { border-bottom-color: var(--accent); }
+      code {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+        background: var(--code-bg);
+        padding: 1px 5px;
+        border-radius: 2px;
+      }
+      pre {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12.5px;
+        line-height: 1.55;
+        background: var(--code-bg);
+        padding: 14px 18px;
+        margin: 14px 0 18px;
+        overflow-x: auto;
+        border-left: 2px solid var(--rule);
+      }
+      pre code { background: transparent; padding: 0; }
+      ul, ol { margin: 8px 0 16px 22px; }
+      li { margin-bottom: 6px; }
+      strong { font-weight: 600; }
+      em { color: var(--ink-soft); }
+      blockquote {
+        border-left: 2px solid var(--rule);
+        padding: 4px 0 4px 18px;
+        margin: 14px 0 18px;
+        color: var(--ink-soft);
+        font-style: italic;
+      }
+
+      /* ─── Tables ─── */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 14px 0 18px;
+        font-size: 14px;
+      }
+      th, td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--rule-soft);
+        vertical-align: top;
+      }
+      th {
+        font-weight: 600;
+        font-family:
+          ui-sans-serif, system-ui,
+          "PingFang SC", "Hiragino Sans GB", sans-serif;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--ink-faint);
+        border-bottom: 1px solid var(--rule);
+      }
+      tbody tr:hover { background: rgba(0,0,0,0.015); }
+      td.num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+      }
+      td.accent { color: var(--accent); font-weight: 500; }
+
+      /* ─── Callouts ─── */
+      .callout {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 18px;
+        margin: 16px 0 20px;
+      }
+      .callout.warn {
+        border-color: #e6d4a8;
+        background: var(--warn-soft);
+      }
+      .callout.cite {
+        border-left: 2px solid var(--accent);
+        border-top: none; border-right: none; border-bottom: none;
+        background: var(--accent-faint);
+        padding-left: 22px;
+        font-style: italic;
+      }
+      .callout-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .callout.warn .callout-label { color: var(--warn); }
+      .cite-source {
+        font-style: normal;
+        font-size: 12px;
+        color: var(--ink-faint);
+        margin-top: 10px;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+      }
+
+      /* ─── Figure / Diagram ─── */
+      figure {
+        margin: 28px 0 32px;
+        border: 1px solid var(--rule);
+        background: #fff;
+      }
+      figure svg { display: block; width: 100%; height: auto; }
+      figure img { display: block; width: 100%; height: auto; }
+      figcaption {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        padding: 10px 16px;
+        border-top: 1px solid var(--rule-soft);
+        background: var(--paper-edge);
+      }
+      figcaption .fig-num {
+        color: var(--accent);
+        margin-right: 10px;
+        font-weight: 600;
+      }
+
+      /* ─── N-column concept cards ─── */
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin: 20px 0 18px;
+      }
+      .cards.cols-2 { grid-template-columns: repeat(2, 1fr); }
+      .cards.cols-4 { grid-template-columns: repeat(4, 1fr); }
+      .card {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 16px 14px;
+      }
+      .card-icon {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .card-name {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 17px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .card-where {
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-style: italic;
+        margin-bottom: 10px;
+      }
+      .card-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+
+      /* tone variants for cards */
+      .card.tone-a .card-icon { color: var(--brain); }
+      .card.tone-b .card-icon { color: var(--hands); }
+      .card.tone-c .card-icon { color: var(--session); }
+
+      /* ─── Buttons / Inputs (for interactive sections) ─── */
+      .btn {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 8px 14px;
+        background: #fff;
+        color: var(--ink);
+        border: 1px solid var(--rule);
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn:hover { background: var(--paper-edge); }
+      .btn.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .btn.primary:hover { background: #5a87a4; }
+
+      input[type="text"], input[type="email"], textarea, select {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 14px;
+        padding: 8px 12px;
+        background: #fff;
+        border: 1px solid var(--rule);
+        color: var(--ink);
+        width: 100%;
+        margin-bottom: 10px;
+      }
+      input:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      /* ─── Footer ─── */
+      footer {
+        margin-top: 80px;
+        padding-top: 24px;
+        border-top: 1px solid var(--rule);
+        font-size: 12px;
+        color: var(--ink-faint);
+      }
+      footer h4 {
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        margin-bottom: 10px;
+        color: var(--ink-soft);
+      }
+      footer ul { list-style: none; margin-left: 0; }
+      footer li { margin-bottom: 4px; }
+
+      .mascot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+
+      @media (max-width: 720px) {
+        body { padding: 32px 16px 64px; }
+        .doc-title { font-size: 26px; }
+        .cards, .cards.cols-2, .cards.cols-4 { grid-template-columns: 1fr; }
+        .doc-meta { flex-wrap: wrap; gap: 12px; }
+      }
+    
+
+      .source-note {
+        border-top: 1px solid var(--rule);
+        color: var(--ink-faint);
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        margin-top: 56px;
+        padding-top: 14px;
+        text-transform: uppercase;
+      }
+</style>
+  </head>
+  <body>
+    <article class="doc">
+      <header class="doc-header">
+        <div class="doc-eyebrow"><span class="mascot"></span>Nodejs · Migrated Article</div>
+        <h1 class="doc-title">Worker_threads_工作线程</h1>
+        <p class="doc-subtitle">讲解Nodejs中子线程相关内容，这是比较细致的讲解，有具体方法调用</p>
+        <div class="doc-meta">
+          <span>DATE · 2024-01-03</span>
+          <span>TAGS · Nodejs, Frontend, Server</span>
+          <span>SOURCE · old blog</span>
+        </div>
+      </header>
+
+      <div class="tldr">
+        <div class="tldr-label">TL;DR</div>
+        讲解Nodejs中子线程相关内容，这是比较细致的讲解，有具体方法调用
+      </div>
+
+      <section>
+<h2><span class="num">01</span>Worker threads</h2>
+<p>工作线程 可以共享内存  处理cpu密集型可以使用</p>
+</section>
+<section>
+<h2><span class="num">02</span>Class</h2>
+<h3><code>MessagePort</code></h3>
+<p>消息端口 代表双向通信频道的一端</p>
+<p><strong>Event</strong></p>
+<p><code>close</code> : 任何一方断开连接 就会触发&#39;close&#39;事件</p>
+<pre><code data-language="js">const { MessageChannel } = require(&#39;node:worker_threads&#39;);
+const { port1, port2 } = new MessageChannel();
+
+port2.on(&#39;message&#39;, (message) =&gt; console.log(message));
+port2.on(&#39;close&#39;, () =&gt; console.log(&#39;closed!&#39;));
+
+port1.postMessage(&#39;foobar&#39;);
+port1.close();
+
+// Prints:
+//   foobar
+//   closed!</code></pre>
+<p><code>message</code>: postMessage(value) 会派发 message事件  value会被克隆传入</p>
+<p><code>messageerror</code> : postMessage(value)  value值反序列化 无法解析 会被触发</p>
+<p><strong>Method</strong></p>
+<p>port.close() 关闭端口</p>
+<p>port.postMessage(value[, transferList])</p>
+<ul>
+  <li>value :any （克隆目标（序列化形式 克隆））</li>
+  <li>transferList : Object[].  （移动 使用此法 发送端不可访问 所有权转移 注意如果要使用value里要有）</li>
+</ul>
+<pre><code data-language="js">const assert = require(&#39;node:assert&#39;);
+const {
+  Worker, MessageChannel, MessagePort, isMainThread, parentPort,
+} = require(&#39;node:worker_threads&#39;);
+if (isMainThread) {
+  const worker = new Worker(__filename);
+  const subChannel = new MessageChannel();
+  worker.postMessage({ hereIsYourPort: subChannel.port1 }, [subChannel.port1]);
+  subChannel.port2.on(&#39;message&#39;, (value) =&gt; {
+    console.log(&#39;received:&#39;, value);
+  });
+} else {
+  parentPort.once(&#39;message&#39;, (value) =&gt; {
+    assert(value.hereIsYourPort instanceof MessagePort);
+    value.hereIsYourPort.postMessage(&#39;the worker is sending this&#39;);
+    value.hereIsYourPort.close();
+  });
+}</code></pre>
+<p>port.ref() port.unref() port.hasRef()   用于保持端口为活动状态 防止程序退出 port.start() 设置message监听时自动调用</p>
+<h3><code>MessageChannel</code></h3>
+<p>异步的双向通信通道</p>
+<pre><code data-language="js">const { MessageChannel } = require(&#39;node:worker_threads&#39;);
+
+const { port1, port2 } = new MessageChannel();
+port1.on(&#39;message&#39;, (message) =&gt; console.log(&#39;received&#39;, message));
+port2.postMessage({ foo: &#39;bar&#39; });
+// Prints: received { foo: &#39;bar&#39; } from the `port1.on(&#39;message&#39;)` listener</code></pre>
+<p>有port1, port2 两个端口(messagePort)  然后双向通信</p>
+<h3><code>BroadcastChannel</code></h3>
+<p>异步的一对多通信</p>
+<p><strong>new BroadcastChannel(name)</strong></p>
+<p>连接的通道名字</p>
+<p><strong>method</strong></p>
+<p>broadcastChannel.close() 关闭 broadcastChannel.onmessage 消息监听 broadcastChannel.onmessageerro broadcastChannel.postMessage(message) 消息派发 broadcastChannel.ref() broadcastChannel.unref()</p>
+<pre><code data-language="js">&#39;use strict&#39;;
+
+const {
+  isMainThread,
+  BroadcastChannel,
+  Worker,
+} = require(&#39;node:worker_threads&#39;);
+
+const bc = new BroadcastChannel(&#39;hello&#39;);
+
+if (isMainThread) {
+  let c = 0;
+  bc.onmessage = (event) =&gt; {
+    console.log(event.data);
+    if (++c === 10) bc.close();
+  };
+  for (let n = 0; n &lt; 10; n++)
+    new Worker(__filename);
+} else {
+  bc.postMessage(&#39;hello from every worker&#39;);
+  bc.close();
+}</code></pre>
+<p>主线程、子线程 都定义了hello的通道</p>
+<h3><code>Worker</code></h3>
+<p><strong>new Worker(filename[, options])</strong></p>
+<p>filename: string | url  主要传路径 绝对/相对都可以 options: object</p>
+<ul>
+  <li>workerData: any  传递数据 序列化克隆进线程中 <a href="https://nodejs.org/docs/latest/api/worker_threads.html#workerworkerdata"><code>require(&#39;node:worker_threads&#39;).workerData</code></a>. 线程中可以直接引入</li>
+  <li>argv: any[] 追加在 process.argv</li>
+  <li>eval: boolean 开启时 filename变为可执行string块</li>
+  <li>transferList : 同上 转移必要的所有权 如果workerData里有端口 一定要传</li>
+  <li>stdin: boolean 为true worker.stdin提供可写流  Worker 内部作为 <code>process.stdin</code>出现</li>
+  <li>stdout: boolean 为 <code>true</code>  worker.stdout 不会自动传输到父进程的 <code>process.stdout</code></li>
+  <li>stderr: boolean 为 <code>true</code> worker.stderr 不会自动传输到父进程的 `process.stderr</li>
+  <li>resourceLimits 设定物理资源限制</li>
+  <li>还有其他属性:  <a href="https://nodejs.org/docs/latest/api/worker_threads.html#class-worker">link</a></li>
+</ul>
+<p><strong>Event</strong></p>
+<p><code>error</code>: 线程中抛出异常时 触发 并且线程中断</p>
+<ul>
+  <li><code>err</code> <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a></li>
+</ul>
+<p><code>exit</code>: 线程中调用 <a href="https://nodejs.org/docs/latest/api/process.html#processexitcode"><code>process.exit()</code></a>  线程中断</p>
+<ul>
+  <li><code>exitCode</code> <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Number_type">integer</a> 退出为1  </li>
+</ul>
+<p><code>message</code>、<code>messageerror</code>: 同上文</p>
+<p><code>online</code>: 线程 开始执行js代码时触发</p>
+<p><strong>method</strong></p>
+<ul>
+  <li>worker.getHeapSnapshot([options]) 获取堆快照信息</li>
+  <li>worker.performance 一个对象查询线程实例 性能数据</li>
+  <li>performance.eventLoopUtilization([utilization1[, utilization2]]) 用于获取的事件循环利用率</li>
+  <li>worker.postMessage(value[, transferList])</li>
+  <li>worker.ref() <code>unref()</code> 标记关键\ 非关键  （是否需要等线程完成 程序才退出）</li>
+  <li>worker.resourceLimits  一个对象 资源占用内容</li>
+  <li>worker.stderr worker.stdin  worker.stdout</li>
+  <li>worker.terminate() 快速终止线程 返回promise resolve的是退出码 在exit事件派发时激发promise</li>
+</ul>
+</section>
+<section>
+<h2><span class="num">03</span>Function Object String Boolean</h2>
+<h3>setEnvironmentData</h3>
+<h3>getEnvironmentData</h3>
+<h3>isMainThread</h3>
+<pre><code data-language="js">const {
+  Worker,
+  isMainThread,
+  setEnvironmentData,
+  getEnvironmentData,
+} = require(&#39;node:worker_threads&#39;);
+
+if (isMainThread) {
+  setEnvironmentData(&#39;Hello&#39;, &#39;World!&#39;);
+  const worker = new Worker(__filename);
+} else {
+  console.log(getEnvironmentData(&#39;Hello&#39;));  // Prints &#39;World!&#39;.
+}</code></pre>
+<p>getEnvironmentData获取设置的值 在线程中  (注意 设置的值只有map的key可以设置的值) isMainThread 是否是主线程</p>
+<h3>markAsUntransferable</h3>
+<h3>isMarkedAsUntransferable</h3>
+<p>只能在主线程使用 将某个变量设置为不可传递   即不可转移所有权</p>
+<h3>moveMessagePortToContext(port, contextifiedSandbox)</h3>
+<p>移动消息端口 到沙箱中</p>
+<h3>parentPort</h3>
+<p>父亲消息端口 一般在worker中调用 获取主线程端口</p>
+<h3>resourceLimits</h3>
+<p>展示物理资源限制 一般在自子线程中使用</p>
+<h3>receiveMessageOnPort(port)</h3>
+<p>接受一条消息 从 消息端口中</p>
+<p>注意 消息派发如果没有监听 那么消息会堆积在消息队列中  receiveMessageOnPort会获取最老的一条消息</p>
+<pre><code data-language="js">const { MessageChannel, receiveMessageOnPort } = require(&#39;node:worker_threads&#39;);
+const { port1, port2 } = new MessageChannel();
+port1.postMessage({ hello: &#39;world&#39; });
+
+console.log(receiveMessageOnPort(port2));
+// Prints: { message: { hello: &#39;world&#39; } }
+console.log(receiveMessageOnPort(port2));
+// Prints: undefined</code></pre>
+<h3>SHARE_ENV</h3>
+<pre><code data-language="js">const { Worker, SHARE_ENV } = require(&#39;node:worker_threads&#39;);
+new Worker(&#39;process.env.SET_IN_WORKER = &quot;foo&quot;&#39;, { eval: true, env: SHARE_ENV })
+  .on(&#39;exit&#39;, () =&gt; {
+    console.log(process.env.SET_IN_WORKER);  // Prints &#39;foo&#39;.
+  });</code></pre>
+<p>共享环境变量的意思</p>
+<h3>threadId</h3>
+<p>获取当前线程ID 显然在线程中使用</p>
+<h3>workerData</h3>
+<p>获取当前线程 由外部传入的数据</p>
+</section>
+
+      <div class="source-note">Migrated from data/blog/202401/Worker_threads_工作线程.md</div>
+    </article>
+  </body>
+</html>

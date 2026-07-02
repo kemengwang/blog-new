@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>前端工程化实践</title>
+    <meta name="description" content="前端工程化实践，对目前现状的一些介绍，对主流库分析" />
+    <style>
+      :root {
+        --paper: #f7f7f5;
+        --paper-edge: #efefea;
+        --ink: #1a1a1a;
+        --ink-soft: #4a4a4a;
+        --ink-faint: #7a7a7a;
+        --rule: #d8d8d2;
+        --rule-soft: #e8e8e2;
+        --accent: #6f9bb8;
+        --accent-soft: #d9e6f0;
+        --accent-faint: #eef4f8;
+        --warn: #b88a4a;
+        --warn-soft: #f5ecdc;
+        --danger: #a05050;
+        --code-bg: #ececea;
+
+        /* Semantic palette for three-layer cards. Rename freely
+           (e.g. --layer-a / --layer-b / --layer-c) when the three
+           layers in the doc are not brain/hands/session. */
+        --brain: #6f9bb8;
+        --brain-bg: #eef4f8;
+        --hands: #b88a4a;
+        --hands-bg: #f5ecdc;
+        --session: #6b7560;
+        --session-bg: #ecede5;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { font-size: 16px; }
+
+      /* Font stacks include both English serifs/monospace and CJK
+         fallbacks so the same template renders cleanly for English
+         or Chinese source content. */
+      body {
+        font-family:
+          ui-serif, "Charter", "Iowan Old Style", "Source Serif Pro", Georgia,
+          "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+        background: var(--paper);
+        color: var(--ink);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        padding: 64px 24px 96px;
+      }
+
+      .doc { max-width: 840px; margin: 0 auto; }
+
+      /* ─── Header ─── */
+      .doc-header {
+        border-bottom: 1px solid var(--rule);
+        padding-bottom: 28px;
+        margin-bottom: 48px;
+      }
+      .doc-eyebrow {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 14px;
+      }
+      .doc-title {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 34px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+      }
+      .doc-subtitle {
+        font-size: 16px;
+        color: var(--ink-soft);
+        margin-top: 10px;
+        font-style: italic;
+      }
+      .doc-meta {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        color: var(--ink-faint);
+        margin-top: 18px;
+        display: flex;
+        gap: 24px;
+      }
+
+      /* ─── TL;DR ─── */
+      .tldr {
+        background: var(--accent-faint);
+        border-left: 2px solid var(--accent);
+        padding: 20px 24px;
+        margin-bottom: 56px;
+        font-size: 15px;
+      }
+      .tldr-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      /* ─── Sections ─── */
+      section { margin-bottom: 56px; }
+      h2 {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.005em;
+        margin-bottom: 18px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--rule);
+      }
+      h2 .num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-weight: 500;
+        margin-right: 14px;
+        letter-spacing: 0.05em;
+      }
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 28px 0 10px;
+      }
+      h4 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 22px 0 8px;
+      }
+      p { margin-bottom: 14px; }
+      p + p { margin-top: -2px; }
+      a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+      a:hover { border-bottom-color: var(--accent); }
+      code {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+        background: var(--code-bg);
+        padding: 1px 5px;
+        border-radius: 2px;
+      }
+      pre {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12.5px;
+        line-height: 1.55;
+        background: var(--code-bg);
+        padding: 14px 18px;
+        margin: 14px 0 18px;
+        overflow-x: auto;
+        border-left: 2px solid var(--rule);
+      }
+      pre code { background: transparent; padding: 0; }
+      ul, ol { margin: 8px 0 16px 22px; }
+      li { margin-bottom: 6px; }
+      strong { font-weight: 600; }
+      em { color: var(--ink-soft); }
+      blockquote {
+        border-left: 2px solid var(--rule);
+        padding: 4px 0 4px 18px;
+        margin: 14px 0 18px;
+        color: var(--ink-soft);
+        font-style: italic;
+      }
+
+      /* ─── Tables ─── */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 14px 0 18px;
+        font-size: 14px;
+      }
+      th, td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--rule-soft);
+        vertical-align: top;
+      }
+      th {
+        font-weight: 600;
+        font-family:
+          ui-sans-serif, system-ui,
+          "PingFang SC", "Hiragino Sans GB", sans-serif;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--ink-faint);
+        border-bottom: 1px solid var(--rule);
+      }
+      tbody tr:hover { background: rgba(0,0,0,0.015); }
+      td.num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+      }
+      td.accent { color: var(--accent); font-weight: 500; }
+
+      /* ─── Callouts ─── */
+      .callout {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 18px;
+        margin: 16px 0 20px;
+      }
+      .callout.warn {
+        border-color: #e6d4a8;
+        background: var(--warn-soft);
+      }
+      .callout.cite {
+        border-left: 2px solid var(--accent);
+        border-top: none; border-right: none; border-bottom: none;
+        background: var(--accent-faint);
+        padding-left: 22px;
+        font-style: italic;
+      }
+      .callout-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .callout.warn .callout-label { color: var(--warn); }
+      .cite-source {
+        font-style: normal;
+        font-size: 12px;
+        color: var(--ink-faint);
+        margin-top: 10px;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+      }
+
+      /* ─── Figure / Diagram ─── */
+      figure {
+        margin: 28px 0 32px;
+        border: 1px solid var(--rule);
+        background: #fff;
+      }
+      figure svg { display: block; width: 100%; height: auto; }
+      figure img { display: block; width: 100%; height: auto; }
+      figcaption {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        padding: 10px 16px;
+        border-top: 1px solid var(--rule-soft);
+        background: var(--paper-edge);
+      }
+      figcaption .fig-num {
+        color: var(--accent);
+        margin-right: 10px;
+        font-weight: 600;
+      }
+
+      /* ─── N-column concept cards ─── */
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin: 20px 0 18px;
+      }
+      .cards.cols-2 { grid-template-columns: repeat(2, 1fr); }
+      .cards.cols-4 { grid-template-columns: repeat(4, 1fr); }
+      .card {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 16px 14px;
+      }
+      .card-icon {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .card-name {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 17px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .card-where {
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-style: italic;
+        margin-bottom: 10px;
+      }
+      .card-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+
+      /* tone variants for cards */
+      .card.tone-a .card-icon { color: var(--brain); }
+      .card.tone-b .card-icon { color: var(--hands); }
+      .card.tone-c .card-icon { color: var(--session); }
+
+      /* ─── Buttons / Inputs (for interactive sections) ─── */
+      .btn {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 8px 14px;
+        background: #fff;
+        color: var(--ink);
+        border: 1px solid var(--rule);
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn:hover { background: var(--paper-edge); }
+      .btn.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .btn.primary:hover { background: #5a87a4; }
+
+      input[type="text"], input[type="email"], textarea, select {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 14px;
+        padding: 8px 12px;
+        background: #fff;
+        border: 1px solid var(--rule);
+        color: var(--ink);
+        width: 100%;
+        margin-bottom: 10px;
+      }
+      input:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      /* ─── Footer ─── */
+      footer {
+        margin-top: 80px;
+        padding-top: 24px;
+        border-top: 1px solid var(--rule);
+        font-size: 12px;
+        color: var(--ink-faint);
+      }
+      footer h4 {
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        margin-bottom: 10px;
+        color: var(--ink-soft);
+      }
+      footer ul { list-style: none; margin-left: 0; }
+      footer li { margin-bottom: 4px; }
+
+      .mascot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+
+      @media (max-width: 720px) {
+        body { padding: 32px 16px 64px; }
+        .doc-title { font-size: 26px; }
+        .cards, .cards.cols-2, .cards.cols-4 { grid-template-columns: 1fr; }
+        .doc-meta { flex-wrap: wrap; gap: 12px; }
+      }
+    
+
+      .source-note {
+        border-top: 1px solid var(--rule);
+        color: var(--ink-faint);
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        margin-top: 56px;
+        padding-top: 14px;
+        text-transform: uppercase;
+      }
+</style>
+  </head>
+  <body>
+    <article class="doc">
+      <header class="doc-header">
+        <div class="doc-eyebrow"><span class="mascot"></span>Frontend · Migrated Article</div>
+        <h1 class="doc-title">前端工程化实践</h1>
+        <p class="doc-subtitle">前端工程化实践，对目前现状的一些介绍，对主流库分析</p>
+        <div class="doc-meta">
+          <span>DATE · 2024-02-08</span>
+          <span>TAGS · Frontend, Pack</span>
+          <span>SOURCE · old blog</span>
+        </div>
+      </header>
+
+      <div class="tldr">
+        <div class="tldr-label">TL;DR</div>
+        前端工程化实践，对目前现状的一些介绍，对主流库分析
+      </div>
+
+      <section>
+<h2><span class="num">01</span>问题</h2>
+<p>js是脚本语言 可以在浏览器这个环境里直接执行 但是直接写js文件 会有各种各样的不便性</p>
+<p>源码和第三方library在html文件中用script标签引入，这种做法随着项目规模的扩大会带来很多问题，主要问题为:</p>
+<ul>
+  <li>变量都在全局作用域，容易命名冲突</li>
+  <li>需要处理好文件之间的依赖，代码引入要注意加载顺序</li>
+  <li>http请求过多，出现性能问题</li>
+  <li>代码维护复杂</li>
+</ul>
+<p>为此打包必不可少 有点像编译环节</p>
+<h3>好处</h3>
+<ol>
+  <li>减少网络请求</li>
+  <li>优化加载性能</li>
+  <li><strong>模块化开发</strong></li>
+  <li><strong>支持新特性</strong></li>
+  <li>代码分割和懒加载</li>
+  <li><strong>使用现代化框架</strong></li>
+  <li><strong>使用静态类型语言</strong></li>
+  <li><strong>对各类浏览器做兼容</strong></li>
+  <li><strong>便利使用各类流行库(前端生态)</strong></li>
+  <li><strong>制定各种自定义规则</strong></li>
+</ol>
+</section>
+<section>
+<h2><span class="num">02</span>基础概念介绍</h2>
+<h3>bundle</h3>
+<p>一个或多个源文件的集合</p>
+<p>（入口文件 和 由该文件所依赖的其他所有文件）</p>
+<h3>chunk</h3>
+<p>一个js文件  （可以被各种bundle引用）</p>
+<h3>模块</h3>
+<p>一个npm包</p>
+</section>
+<section>
+<h2><span class="num">03</span>目前存在的打包库</h2>
+<p>主流：<strong>Webpack</strong> <strong>Rollup</strong> <strong>Vite</strong> <strong>Gulp</strong> <strong>esbuild</strong> <strong>turbo</strong> 代码转换: <strong>swc</strong> <strong>babel</strong></p>
+<p>其他:  <strong>Grunt</strong> <strong>Browserify</strong> <strong>Brunch</strong> <strong>Snowpack</strong> <strong>SystemJS</strong> <strong>RequireJS</strong> <strong>StealJS</strong> <strong>Metro</strong> <strong>Poi</strong> <strong>Razzle</strong> <strong>Webpacker</strong> <strong>Laravel Mix</strong> fatherjs microbundle  <strong>Parcel</strong></p>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240605185215.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 1</span>tu</figcaption>
+</figure>
+</section>
+<section>
+<h2><span class="num">04</span>主流库使用打包工具分析</h2>
+<h3>React</h3>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240604192242.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 2</span>tu</figcaption>
+</figure>
+<p>作为前端最流行的框架 ，他采用的是rollup作为整体库的构建</p>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240604155813.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 3</span>tu</figcaption>
+</figure>
+<p>可见核心逻辑在 buildEverything中</p>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240604160019.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 4</span>tu</figcaption>
+</figure>
+<p>核心就是对需要构建的bundles列表 执行createBundle 创建所有需要的bundle</p>
+<p>createBundle：可以看到利用rollup.watch 和 rollup.rollup rollup.write  相关js api完成bundle构建</p>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240604160504.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 5</span>tu</figcaption>
+</figure>
+<h3>material-ui</h3>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240604194151.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 6</span>tu</figcaption>
+</figure>
+<p>纯采用babel作为打包构建 打包后保留了原始的项目结构</p>
+<p>好处 本身就是组件的形式组成项目 打包后 可以为每个组件添加package.json 方便用户直接引入子组件</p>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240604193929.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 7</span>tu</figcaption>
+</figure>
+<h3>vue3</h3>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240605174513.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 8</span>tu</figcaption>
+</figure>
+<p>rollup yyds</p>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240605173647.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 9</span>tu</figcaption>
+</figure>
+<h3>element-plus</h3>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240605181623.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 10</span>tu</figcaption>
+</figure>
+<p>整体采用gulp组织流程</p>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240605182311.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 11</span>tu</figcaption>
+</figure>
+<p>内部任务结合rollup js api</p>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240605182525.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 12</span>tu</figcaption>
+</figure>
+<p>dev模式采用的 vite</p>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240605183930.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 13</span>tu</figcaption>
+</figure>
+<h3>next.js</h3>
+<p>由webpack打包 全面转向 turbo</p>
+<p>turbo由rust编写的 增量打包库</p>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240605184835.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 14</span>tu</figcaption>
+</figure>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240605185445.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 15</span>tu</figcaption>
+</figure>
+<h3>ant-design-mobile</h3>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240605190253.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 16</span>tu</figcaption>
+</figure>
+<p>使用gulp 生态 完成cjs es 打包  使用vite、webpack 相关js api 打包bundle umd</p>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240605193900.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 17</span>tu</figcaption>
+</figure>
+</section>
+<section>
+<h2><span class="num">05</span>脑洞大开系列</h2>
+<h3>electron</h3>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240606114736.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 18</span>tu</figcaption>
+</figure>
+<p>electron是一个客户端跨平台解决方案(c编写)</p>
+<p>目前qq、bilibili pc端 均采用该技术</p>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240606114921.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 19</span>tu</figcaption>
+</figure>
+<p>gn: Generate Ninja 用于生成 Ninja 的构建文件. Ninja 是一个小型的构建系统.</p>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240606114725.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 20</span>tu</figcaption>
+</figure>
+<p>可以看倒electron在整体构建中 其中一部分有对前端代码的打包，采用的webpack打包 webpack.gni其内容就是执行了npm命令 执行webpack打包</p>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240606131157.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 21</span>tu</figcaption>
+</figure>
+<h3>react-native</h3>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240606134116.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 22</span>tu</figcaption>
+</figure>
+<p>C++编写</p>
+<p>它允许开发者使用 JavaScript 和 React（一种用于构建用户界面的 JavaScript 库）编写应用，然后将这些应用编译成原生应用，可以在 Android 和 iOS 设备上运行 (支持热重载)</p>
+<p>主要使用了babel来转化库里前端相关的代码</p>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240606133831.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 23</span>tu</figcaption>
+</figure>
+<h3>uni-app</h3>
+<p>vite + rollup</p>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240606140035.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 24</span>tu</figcaption>
+</figure>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240606140051.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 25</span>tu</figcaption>
+</figure>
+<h3>taro</h3>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240606141817.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 26</span>tu</figcaption>
+</figure>
+<p>rollup为主  直接采用</p>
+<figure>
+  <img src="/blog/static/images/blog/202402/FrontendEngineeringPractice/20240606142026.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 27</span>tu</figcaption>
+</figure>
+</section>
+
+      <div class="source-note">Migrated from data/blog/202402/FrontendEngineeringPractice.md</div>
+    </article>
+  </body>
+</html>

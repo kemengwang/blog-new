@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite</title>
+    <meta name="description" content="Vite讲解 主要以js-api和插件的形式  具体config请查阅官网" />
+    <style>
+      :root {
+        --paper: #f7f7f5;
+        --paper-edge: #efefea;
+        --ink: #1a1a1a;
+        --ink-soft: #4a4a4a;
+        --ink-faint: #7a7a7a;
+        --rule: #d8d8d2;
+        --rule-soft: #e8e8e2;
+        --accent: #6f9bb8;
+        --accent-soft: #d9e6f0;
+        --accent-faint: #eef4f8;
+        --warn: #b88a4a;
+        --warn-soft: #f5ecdc;
+        --danger: #a05050;
+        --code-bg: #ececea;
+
+        /* Semantic palette for three-layer cards. Rename freely
+           (e.g. --layer-a / --layer-b / --layer-c) when the three
+           layers in the doc are not brain/hands/session. */
+        --brain: #6f9bb8;
+        --brain-bg: #eef4f8;
+        --hands: #b88a4a;
+        --hands-bg: #f5ecdc;
+        --session: #6b7560;
+        --session-bg: #ecede5;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { font-size: 16px; }
+
+      /* Font stacks include both English serifs/monospace and CJK
+         fallbacks so the same template renders cleanly for English
+         or Chinese source content. */
+      body {
+        font-family:
+          ui-serif, "Charter", "Iowan Old Style", "Source Serif Pro", Georgia,
+          "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+        background: var(--paper);
+        color: var(--ink);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        padding: 64px 24px 96px;
+      }
+
+      .doc { max-width: 840px; margin: 0 auto; }
+
+      /* ─── Header ─── */
+      .doc-header {
+        border-bottom: 1px solid var(--rule);
+        padding-bottom: 28px;
+        margin-bottom: 48px;
+      }
+      .doc-eyebrow {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 14px;
+      }
+      .doc-title {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 34px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+      }
+      .doc-subtitle {
+        font-size: 16px;
+        color: var(--ink-soft);
+        margin-top: 10px;
+        font-style: italic;
+      }
+      .doc-meta {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        color: var(--ink-faint);
+        margin-top: 18px;
+        display: flex;
+        gap: 24px;
+      }
+
+      /* ─── TL;DR ─── */
+      .tldr {
+        background: var(--accent-faint);
+        border-left: 2px solid var(--accent);
+        padding: 20px 24px;
+        margin-bottom: 56px;
+        font-size: 15px;
+      }
+      .tldr-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      /* ─── Sections ─── */
+      section { margin-bottom: 56px; }
+      h2 {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.005em;
+        margin-bottom: 18px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--rule);
+      }
+      h2 .num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-weight: 500;
+        margin-right: 14px;
+        letter-spacing: 0.05em;
+      }
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 28px 0 10px;
+      }
+      h4 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 22px 0 8px;
+      }
+      p { margin-bottom: 14px; }
+      p + p { margin-top: -2px; }
+      a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+      a:hover { border-bottom-color: var(--accent); }
+      code {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+        background: var(--code-bg);
+        padding: 1px 5px;
+        border-radius: 2px;
+      }
+      pre {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12.5px;
+        line-height: 1.55;
+        background: var(--code-bg);
+        padding: 14px 18px;
+        margin: 14px 0 18px;
+        overflow-x: auto;
+        border-left: 2px solid var(--rule);
+      }
+      pre code { background: transparent; padding: 0; }
+      ul, ol { margin: 8px 0 16px 22px; }
+      li { margin-bottom: 6px; }
+      strong { font-weight: 600; }
+      em { color: var(--ink-soft); }
+      blockquote {
+        border-left: 2px solid var(--rule);
+        padding: 4px 0 4px 18px;
+        margin: 14px 0 18px;
+        color: var(--ink-soft);
+        font-style: italic;
+      }
+
+      /* ─── Tables ─── */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 14px 0 18px;
+        font-size: 14px;
+      }
+      th, td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--rule-soft);
+        vertical-align: top;
+      }
+      th {
+        font-weight: 600;
+        font-family:
+          ui-sans-serif, system-ui,
+          "PingFang SC", "Hiragino Sans GB", sans-serif;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--ink-faint);
+        border-bottom: 1px solid var(--rule);
+      }
+      tbody tr:hover { background: rgba(0,0,0,0.015); }
+      td.num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+      }
+      td.accent { color: var(--accent); font-weight: 500; }
+
+      /* ─── Callouts ─── */
+      .callout {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 18px;
+        margin: 16px 0 20px;
+      }
+      .callout.warn {
+        border-color: #e6d4a8;
+        background: var(--warn-soft);
+      }
+      .callout.cite {
+        border-left: 2px solid var(--accent);
+        border-top: none; border-right: none; border-bottom: none;
+        background: var(--accent-faint);
+        padding-left: 22px;
+        font-style: italic;
+      }
+      .callout-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .callout.warn .callout-label { color: var(--warn); }
+      .cite-source {
+        font-style: normal;
+        font-size: 12px;
+        color: var(--ink-faint);
+        margin-top: 10px;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+      }
+
+      /* ─── Figure / Diagram ─── */
+      figure {
+        margin: 28px 0 32px;
+        border: 1px solid var(--rule);
+        background: #fff;
+      }
+      figure svg { display: block; width: 100%; height: auto; }
+      figure img { display: block; width: 100%; height: auto; }
+      figcaption {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        padding: 10px 16px;
+        border-top: 1px solid var(--rule-soft);
+        background: var(--paper-edge);
+      }
+      figcaption .fig-num {
+        color: var(--accent);
+        margin-right: 10px;
+        font-weight: 600;
+      }
+
+      /* ─── N-column concept cards ─── */
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin: 20px 0 18px;
+      }
+      .cards.cols-2 { grid-template-columns: repeat(2, 1fr); }
+      .cards.cols-4 { grid-template-columns: repeat(4, 1fr); }
+      .card {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 16px 14px;
+      }
+      .card-icon {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .card-name {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 17px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .card-where {
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-style: italic;
+        margin-bottom: 10px;
+      }
+      .card-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+
+      /* tone variants for cards */
+      .card.tone-a .card-icon { color: var(--brain); }
+      .card.tone-b .card-icon { color: var(--hands); }
+      .card.tone-c .card-icon { color: var(--session); }
+
+      /* ─── Buttons / Inputs (for interactive sections) ─── */
+      .btn {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 8px 14px;
+        background: #fff;
+        color: var(--ink);
+        border: 1px solid var(--rule);
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn:hover { background: var(--paper-edge); }
+      .btn.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .btn.primary:hover { background: #5a87a4; }
+
+      input[type="text"], input[type="email"], textarea, select {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 14px;
+        padding: 8px 12px;
+        background: #fff;
+        border: 1px solid var(--rule);
+        color: var(--ink);
+        width: 100%;
+        margin-bottom: 10px;
+      }
+      input:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      /* ─── Footer ─── */
+      footer {
+        margin-top: 80px;
+        padding-top: 24px;
+        border-top: 1px solid var(--rule);
+        font-size: 12px;
+        color: var(--ink-faint);
+      }
+      footer h4 {
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        margin-bottom: 10px;
+        color: var(--ink-soft);
+      }
+      footer ul { list-style: none; margin-left: 0; }
+      footer li { margin-bottom: 4px; }
+
+      .mascot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+
+      @media (max-width: 720px) {
+        body { padding: 32px 16px 64px; }
+        .doc-title { font-size: 26px; }
+        .cards, .cards.cols-2, .cards.cols-4 { grid-template-columns: 1fr; }
+        .doc-meta { flex-wrap: wrap; gap: 12px; }
+      }
+    
+
+      .source-note {
+        border-top: 1px solid var(--rule);
+        color: var(--ink-faint);
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        margin-top: 56px;
+        padding-top: 14px;
+        text-transform: uppercase;
+      }
+</style>
+  </head>
+  <body>
+    <article class="doc">
+      <header class="doc-header">
+        <div class="doc-eyebrow"><span class="mascot"></span>Frontend · Migrated Article</div>
+        <h1 class="doc-title">Vite</h1>
+        <p class="doc-subtitle">Vite讲解 主要以js-api和插件的形式  具体config请查阅官网</p>
+        <div class="doc-meta">
+          <span>DATE · 2024-02-02</span>
+          <span>TAGS · Frontend, Pack, Vite</span>
+          <span>SOURCE · old blog</span>
+        </div>
+      </header>
+
+      <div class="tldr">
+        <div class="tldr-label">TL;DR</div>
+        Vite讲解 主要以js-api和插件的形式  具体config请查阅官网
+      </div>
+
+      <section>
+<h2><span class="num">01</span>介绍</h2>
+<p>vite开发环境依赖esbuild进行预构建，生产环境则依赖rollup进行打包，并且充分利用了现代浏览器的特性，比如http2、ES module，vite是站在众多巨人肩膀上的一个产物</p>
+</section>
+<section>
+<h2><span class="num">02</span>原理</h2>
+<p>当我们使用webpack启动项目时，webpack会根据我们配置文件（webpack.config.js） 中的入口文件（entry），分析出项目项目所有依赖关系，然后打包成一个文件（bundle.js），交给浏览器去加载渲染。 这样就会带来一个问题，项目越大，需要打包的东西越多，启动时间越长</p>
+<p>目前，绝大多数现代浏览器都已经支持ES module了， 我们只需要在<code>&lt;script&gt;</code>标签中添加<code>type=&quot;module&quot;</code>，就可以使用ES module了。</p>
+<p>如此一来，可以启动一个服务 路径/用来返回index.html的页面，执行页面请求到对应的js，服务指定js结尾的响应，并且在读取的过程中把内容替换，因为浏览器不识别模块node_modules,替换为约定路径，然后请求到这个路径，我们从node_modules里读取返回。jsx结尾怎么半，还是一样提供这个路径，找到相关文件并执行编译，转换为类似createElement的渲染函数，这样就可以作为js执行</p>
+<p>不过纯服务可定是不行的不然上千个请求直接寄了，所以vite还有一层预构建使用esbuild，速度非常快，一些常规的代码转也会在预编译里做，这里会做一些vite的内置插件操作</p>
+<pre><code data-language="js">// test.js
+export default function hello() {
+  console.log(&#39;hello world&#39;);
+}
+
+// index.html
+&lt;script type=&quot;module&quot;&gt;
+  import hello from &#39;./test.js&#39;;
+
+  hello(); // hello world
+&lt;/scirpt&gt;</code></pre>
+<p>可以在浏览器中直接主席直接执行，不过import是一个网络请求了</p>
+</section>
+<section>
+<h2><span class="num">03</span>JS API</h2>
+<h3>createServer</h3>
+<p>创建vite dev服务器</p>
+<pre><code data-language="js">import { fileURLToPath } from &#39;url&#39;
+import { createServer } from &#39;vite&#39;
+
+const __dirname = fileURLToPath(new URL(&#39;.&#39;, import.meta.url))
+
+;(async () =&gt; {
+  const server = await createServer({
+    // any valid user config options, plus `mode` and `configFile`
+    configFile: false,//禁止自动解析vite配置文件，可以传入配置地址
+    envFile: false,// 禁止`.env` 文件
+    root: __dirname,
+    server: {
+      port: 1337,
+    },
+  })
+  await server.listen()
+
+  server.printUrls()
+  server.bindCLIShortcuts({ print: true })
+})()</code></pre>
+<p>如果有自己的server</p>
+<p>可以直接绑定中间件</p>
+<pre><code data-language="ts">import http from &#39;http&#39;
+import { createServer } from &#39;vite&#39;
+
+const parentServer = http.createServer() // or express, koa, etc.
+
+const vite = await createServer({
+  server: {
+    // Enable middleware mode
+    middlewareMode: {
+      // Provide the parent http server for proxy WebSocket
+      server: parentServer,
+    },
+  },
+  proxy: {
+    &#39;/ws&#39;: {
+      target: &#39;ws://localhost:3000&#39;,
+      // Proxying WebSocket
+      ws: true,
+    },
+  },
+})
+
+parentServer.use(vite.middlewares)</code></pre>
+<h3>InlineConfig</h3>
+<ul>
+  <li>configFile</li>
+  <li>envFile</li>
+  <li><code>{...UserConfig}</code></li>
+</ul>
+<h3>ResolvedConfig</h3>
+<p>解析后的config. createServer创建的server实例上的属性</p>
+<h3>ViteDevServer</h3>
+<pre><code data-language="ts">interface ViteDevServer {
+  /**
+   * The resolved Vite config object.
+   */
+  config: ResolvedConfig
+  /**
+   * A connect app instance
+   * - Can be used to attach custom middlewares to the dev server.
+   * - Can also be used as the handler function of a custom http server
+   *   or as a middleware in any connect-style Node.js frameworks.
+   *
+   * https://github.com/senchalabs/connect#use-middleware
+   */
+  middlewares: Connect.Server
+  /**
+   * Native Node http server instance.
+   * Will be null in middleware mode.
+   */
+  httpServer: http.Server | null
+  /**
+   * Chokidar watcher instance. If `config.server.watch` is set to `null`,
+   * returns a noop event emitter.
+   * https://github.com/paulmillr/chokidar#api
+   */
+  watcher: FSWatcher
+  /**
+   * Web socket server with `send(payload)` method.
+   */
+  ws: WebSocketServer
+  /**
+   * Rollup plugin container that can run plugin hooks on a given file.
+   */
+  pluginContainer: PluginContainer
+  /**
+   * Module graph that tracks the import relationships, url to file mapping
+   * and hmr state.
+   */
+  moduleGraph: ModuleGraph
+  /**
+   * The resolved urls Vite prints on the CLI. null in middleware mode or
+   * before `server.listen` is called.
+   */
+  resolvedUrls: ResolvedServerUrls | null
+  /**
+   * Programmatically resolve, load and transform a URL and get the result
+   * without going through the http request pipeline.
+   */
+  transformRequest(
+    url: string,
+    options?: TransformOptions,
+  ): Promise&lt;TransformResult | null&gt;
+  /**
+   * Apply Vite built-in HTML transforms and any plugin HTML transforms.
+   */
+  transformIndexHtml(
+    url: string,
+    html: string,
+    originalUrl?: string,
+  ): Promise&lt;string&gt;
+  /**
+   * Load a given URL as an instantiated module for SSR.
+   */
+  ssrLoadModule(
+    url: string,
+    options?: { fixStacktrace?: boolean },
+  ): Promise&lt;Record&lt;string, any&gt;&gt;
+  /**
+   * Fix ssr error stacktrace.
+   */
+  ssrFixStacktrace(e: Error): void
+  /**
+   * Triggers HMR for a module in the module graph. You can use the `server.moduleGraph`
+   * API to retrieve the module to be reloaded. If `hmr` is false, this is a no-op.
+   */
+  reloadModule(module: ModuleNode): Promise&lt;void&gt;
+  /**
+   * Start the server.
+   */
+  listen(port?: number, isRestart?: boolean): Promise&lt;ViteDevServer&gt;
+  /**
+   * Restart the server.
+   *
+   * @param forceOptimize - force the optimizer to re-bundle, same as --force cli flag
+   */
+  restart(forceOptimize?: boolean): Promise&lt;void&gt;
+  /**
+   * Stop the server.
+   */
+  close(): Promise&lt;void&gt;
+  /**
+   * Bind CLI shortcuts
+   */
+  bindCLIShortcuts(options?: BindCLIShortcutsOptions&lt;ViteDevServer&gt;): void
+}</code></pre>
+<h3>build</h3>
+<pre><code data-language="ts">async function build(
+  inlineConfig?: InlineConfig,
+): Promise&lt;RollupOutput | RollupOutput[]&gt;
+
+import path from &#39;path&#39;
+import { fileURLToPath } from &#39;url&#39;
+import { build } from &#39;vite&#39;
+
+const __dirname = fileURLToPath(new URL(&#39;.&#39;, import.meta.url))
+
+;(async () =&gt; {
+  await build({
+    root: path.resolve(__dirname, &#39;./project&#39;),
+    base: &#39;/foo/&#39;,
+    build: {
+      rollupOptions: {
+        // ...
+      },
+    },
+  })
+})()</code></pre>
+<h3>preview</h3>
+<pre><code data-language="ts">import { preview } from &#39;vite&#39;
+;(async () =&gt; {
+  const previewServer = await preview({
+    // any valid user config options, plus `mode` and `configFile`
+    preview: {
+      port: 8080,
+      open: true,
+    },
+  })
+
+  previewServer.printUrls()
+  previewServer.bindCLIShortcuts({ print: true })
+})()</code></pre>
+<p>预览是起一个服务预览production open用于检测有无变化</p>
+<h3>PreviewServer</h3>
+<p><a href="https://vitejs.dev/guide/api-javascript.html">link</a></p>
+<h3>resolveConfig</h3>
+<h3>mergeConfig</h3>
+<p>用于合并Config</p>
+<pre><code data-language="ts">function mergeConfig(
+  defaults: Record&lt;string, any&gt;,
+  overrides: Record&lt;string, any&gt;,
+  isRoot = true, //控制合并级别  false只合并build
+): Record&lt;string, any&gt;
+
+
+
+export default defineConfig((configEnv) =&gt;
+  mergeConfig(configAsCallback(configEnv), configAsObject),
+)</code></pre>
+<h3>searchForWorkspaceRoot</h3>
+<pre><code data-language="ts">function searchForWorkspaceRoot(
+  current: string,
+  root = searchForPackageRoot(current),
+): string</code></pre>
+<p>找工作目录跟路径</p>
+<h3>loadEnv</h3>
+<pre><code data-language="ts">function loadEnv(
+  mode: string,
+  envDir: string,
+  prefixes: string | string[] = &#39;VITE_&#39;,
+): Record&lt;string, string&gt;
+
+process.env = { ...process.env, ...loadEnv(mode, process.cwd()) }</code></pre>
+<p>加载环境变量  默认load .env文件</p>
+<h3>normalizePath</h3>
+<pre><code data-language="ts">function normalizePath(id: string): string</code></pre>
+<p>是路径中的反斜杠正常</p>
+<h3>transformWithEsbuild</h3>
+<pre><code data-language="ts">async function transformWithEsbuild(
+  code: string,
+  filename: string,
+  options?: EsbuildTransformOptions,
+  inMap?: object,
+): Promise&lt;ESBuildTransformResult&gt;</code></pre>
+<h3>loadConfigFromFile</h3>
+<p>Load a Vite config file manually with esbuild.</p>
+<h1>Plugin</h1>
+<h3>通用hook (vite rollup都支持)</h3>
+<p>The following hooks are called on each incoming module request:</p>
+<ul>
+  <li><a href="https://rollupjs.org/plugin-development/#options"><code>options</code></a></li>
+  <li><a href="https://rollupjs.org/plugin-development/#buildstart"><code>buildStart</code></a></li>
+  <li><a href="https://rollupjs.org/plugin-development/#resolveid"><code>resolveId</code></a></li>
+  <li><a href="https://rollupjs.org/plugin-development/#load"><code>load</code></a></li>
+  <li><a href="https://rollupjs.org/plugin-development/#transform"><code>transform</code></a></li>
+</ul>
+<p>The following hooks are called when the server is closed:</p>
+<ul>
+  <li><a href="https://rollupjs.org/plugin-development/#buildend"><code>buildEnd</code></a></li>
+  <li><a href="https://rollupjs.org/plugin-development/#closebundle"><code>closeBundle</code></a></li>
+</ul>
+<p>**注: dev 不掉用rollup 生成期hook  <a href="https://rollupjs.org/plugin-development/#moduleparsed"><code>moduleParsed</code></a> 也不调用</p>
+<h3>Vite Specific Hooks</h3>
+<ul>
+  <li><a href="https://vitejs.dev/guide/api-plugin.html#config &quot;config&quot;">config</a>  (<code>async</code>, <code>sequential</code>) 返回部分配置、或者直接修改</li>
+</ul>
+<pre><code data-language="js">// return partial config (recommended)
+const partialConfigPlugin = () =&gt; ({
+  name: &#39;return-partial&#39;,
+  config: () =&gt; ({
+    resolve: {
+      alias: {
+        foo: &#39;bar&#39;,
+      },
+    },
+  }),
+})
+
+// mutate the config directly (use only when merging doesn&#39;t work)
+const mutateConfigPlugin = () =&gt; ({
+  name: &#39;mutate-config&#39;,
+  config(config, { command }) {
+    if (command === &#39;build&#39;) {
+      config.root = &#39;foo&#39;
+    }
+  },
+})</code></pre>
+<ul>
+  <li><a href="https://vitejs.dev/guide/api-plugin.html#configresolved &quot;configResolved&quot;">configResolved</a>(<code>async</code>, <code>parallel</code>) config之后  拿到最终处理好的config</li>
+</ul>
+<pre><code data-language="js">const examplePlugin = () =&gt; {
+  let config
+
+  return {
+    name: &#39;read-config&#39;,
+
+    configResolved(resolvedConfig) {
+      // store the resolved config
+      config = resolvedConfig
+    },
+
+    // use stored config in other hooks
+    transform(code, id) {
+      if (config.command === &#39;serve&#39;) {
+        // dev: plugin invoked by dev server 命令serve就是vite dev | vite
+      } else {
+        // build: plugin invoked by Rollup
+      }
+    },
+  }
+}</code></pre>
+<p>（<code>async</code>, <code>sequential</code>） dev服务hook. 这个hook是在内部中间件注册之前调用 自定义的中间件会在内部中间件之前 如果想之后 那么返回一个函数 <strong>注意：不会在build调用</strong></p>
+<ul>
+  <li><a href="https://vitejs.dev/guide/api-plugin.html#configureserver &quot;configureServer&quot;">configureServer</a> <code>(server: ViteDevServer) =&gt; (() =&gt; void) | void | Promise&lt;(() =&gt; void) | void&gt;</code></li>
+</ul>
+<pre><code data-language="js">const myPlugin = () =&gt; (
+ let _server
+
+
+ return {
+   name: &#39;configure-server&#39;,
+   configureServer(server) {
+  _server = server //也可以存储服务实例
+     server.middlewares.use((req, res, next) =&gt; {
+       // custom handle request...
+     })
+   },
+ }
+
+)</code></pre>
+<ul>
+  <li><a href="https://vitejs.dev/guide/api-plugin.html#configurepreviewserver &quot;configurePreviewServer&quot;">configurePreviewServer</a>同上 不过是给预览服务器使用</li>
+  <li><a href="https://vitejs.dev/guide/api-plugin.html#transformindexhtml &quot;transformIndexHtml&quot;">transformIndexHtml</a>(<code>async</code>, <code>sequential</code>)  转化index .html 详细hook点击查看</li>
+</ul>
+<pre><code data-language="js">const htmlPlugin = () =&gt; {
+  return {
+    name: &#39;html-transform&#39;,
+    transformIndexHtml(html) {
+      return html.replace(
+        /&lt;title&gt;(.*?)&lt;\/title&gt;/,
+        `&lt;title&gt;Title replaced!&lt;/title&gt;`,
+      )
+    },
+  }
+}</code></pre>
+<p><strong>Type:</strong> <code>(ctx: HmrContext) =&gt; Array&lt;ModuleNode&gt; | void | Promise&lt;Array&lt;ModuleNode&gt; | void&gt;</code></p>
+<ul>
+  <li><a href="https://vitejs.dev/guide/api-plugin.html#handlehotupdate &quot;handleHotUpdate&quot;">handleHotUpdate</a> 自定义hmr更新</li>
+</ul>
+<pre><code data-language="ts">interface HmrContext {
+  file: string
+  timestamp: number
+  modules: Array&lt;ModuleNode&gt; //返回受影响的一组模块
+  read: () =&gt; string | Promise&lt;string&gt; //异步读取内容
+  server: ViteDevServer
+}</code></pre>
+<h3>Plugin Ordering</h3>
+<p>enforce: <code>&quot;pre&quot;</code> or <code>&quot;post&quot;</code>.  改变插件执行顺序</p>
+<h3>Conditional Application</h3>
+<pre><code data-language="js">function myPlugin() {
+  return {
+    name: &#39;build-only&#39;,
+    apply: &#39;build&#39;, // or &#39;serve&#39; 对应两个环境适用
+  }
+}
+
+apply(config, { command }) {
+  // apply only on build but not for SSR // ssr构建
+  return command === &#39;build&#39; &amp;&amp; !config.build.ssr
+}</code></pre>
+<h3>Rollup Plugin Compatibility</h3>
+<p>rollup插件 它不使用moduleParsed钩子。 它在束相挂钩和输出相挂钩之间没有很强的耦合。 就可以直接在vite中使用</p>
+<p>可以直接使用vite带有的能力</p>
+<pre><code data-language="js">// vite.config.js
+import example from &#39;rollup-plugin-example&#39;
+import { defineConfig } from &#39;vite&#39;
+
+export default defineConfig({
+  plugins: [
+    {
+      ...example(),
+      enforce: &#39;post&#39;,
+      apply: &#39;build&#39;,
+    },
+  ],
+})</code></pre>
+<p>如果只是对build环节rollup生效可以使用build.rollupOptions.plugins</p>
+<h3>Path Normalization</h3>
+<pre><code data-language="js">import { normalizePath } from &#39;vite&#39;
+
+normalizePath(&#39;foo\\bar&#39;) // &#39;foo/bar&#39;
+normalizePath(&#39;foo/bar&#39;) // &#39;foo/bar&#39;</code></pre>
+<p>规范化路径的斜杠</p>
+<h3>Filtering, include/exclude pattern</h3>
+<p><a href="https://github.com/rollup/plugins/tree/master/packages/pluginutils#createfilter">@rollup/pluginutils&#39;s createFilter</a></p>
+<h3>Client-server Communication</h3>
+<p>一些怪东西 <a href="https://vitejs.dev/guide/api-plugin.html#client-server-communication &quot;Client-server Communication&quot;">Client-server Communication</a> 通过上面hmr的hook 来实现服务 客户端 交流</p>
+</section>
+
+      <div class="source-note">Migrated from data/blog/202402/Vite.md</div>
+    </article>
+  </body>
+</html>

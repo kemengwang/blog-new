@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Module</title>
+    <meta name="description" content="模块的细致讲解" />
+    <style>
+      :root {
+        --paper: #f7f7f5;
+        --paper-edge: #efefea;
+        --ink: #1a1a1a;
+        --ink-soft: #4a4a4a;
+        --ink-faint: #7a7a7a;
+        --rule: #d8d8d2;
+        --rule-soft: #e8e8e2;
+        --accent: #6f9bb8;
+        --accent-soft: #d9e6f0;
+        --accent-faint: #eef4f8;
+        --warn: #b88a4a;
+        --warn-soft: #f5ecdc;
+        --danger: #a05050;
+        --code-bg: #ececea;
+
+        /* Semantic palette for three-layer cards. Rename freely
+           (e.g. --layer-a / --layer-b / --layer-c) when the three
+           layers in the doc are not brain/hands/session. */
+        --brain: #6f9bb8;
+        --brain-bg: #eef4f8;
+        --hands: #b88a4a;
+        --hands-bg: #f5ecdc;
+        --session: #6b7560;
+        --session-bg: #ecede5;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { font-size: 16px; }
+
+      /* Font stacks include both English serifs/monospace and CJK
+         fallbacks so the same template renders cleanly for English
+         or Chinese source content. */
+      body {
+        font-family:
+          ui-serif, "Charter", "Iowan Old Style", "Source Serif Pro", Georgia,
+          "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+        background: var(--paper);
+        color: var(--ink);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        padding: 64px 24px 96px;
+      }
+
+      .doc { max-width: 840px; margin: 0 auto; }
+
+      /* ─── Header ─── */
+      .doc-header {
+        border-bottom: 1px solid var(--rule);
+        padding-bottom: 28px;
+        margin-bottom: 48px;
+      }
+      .doc-eyebrow {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 14px;
+      }
+      .doc-title {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 34px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+      }
+      .doc-subtitle {
+        font-size: 16px;
+        color: var(--ink-soft);
+        margin-top: 10px;
+        font-style: italic;
+      }
+      .doc-meta {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        color: var(--ink-faint);
+        margin-top: 18px;
+        display: flex;
+        gap: 24px;
+      }
+
+      /* ─── TL;DR ─── */
+      .tldr {
+        background: var(--accent-faint);
+        border-left: 2px solid var(--accent);
+        padding: 20px 24px;
+        margin-bottom: 56px;
+        font-size: 15px;
+      }
+      .tldr-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      /* ─── Sections ─── */
+      section { margin-bottom: 56px; }
+      h2 {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.005em;
+        margin-bottom: 18px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--rule);
+      }
+      h2 .num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-weight: 500;
+        margin-right: 14px;
+        letter-spacing: 0.05em;
+      }
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 28px 0 10px;
+      }
+      h4 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 22px 0 8px;
+      }
+      p { margin-bottom: 14px; }
+      p + p { margin-top: -2px; }
+      a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+      a:hover { border-bottom-color: var(--accent); }
+      code {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+        background: var(--code-bg);
+        padding: 1px 5px;
+        border-radius: 2px;
+      }
+      pre {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12.5px;
+        line-height: 1.55;
+        background: var(--code-bg);
+        padding: 14px 18px;
+        margin: 14px 0 18px;
+        overflow-x: auto;
+        border-left: 2px solid var(--rule);
+      }
+      pre code { background: transparent; padding: 0; }
+      ul, ol { margin: 8px 0 16px 22px; }
+      li { margin-bottom: 6px; }
+      strong { font-weight: 600; }
+      em { color: var(--ink-soft); }
+      blockquote {
+        border-left: 2px solid var(--rule);
+        padding: 4px 0 4px 18px;
+        margin: 14px 0 18px;
+        color: var(--ink-soft);
+        font-style: italic;
+      }
+
+      /* ─── Tables ─── */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 14px 0 18px;
+        font-size: 14px;
+      }
+      th, td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--rule-soft);
+        vertical-align: top;
+      }
+      th {
+        font-weight: 600;
+        font-family:
+          ui-sans-serif, system-ui,
+          "PingFang SC", "Hiragino Sans GB", sans-serif;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--ink-faint);
+        border-bottom: 1px solid var(--rule);
+      }
+      tbody tr:hover { background: rgba(0,0,0,0.015); }
+      td.num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+      }
+      td.accent { color: var(--accent); font-weight: 500; }
+
+      /* ─── Callouts ─── */
+      .callout {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 18px;
+        margin: 16px 0 20px;
+      }
+      .callout.warn {
+        border-color: #e6d4a8;
+        background: var(--warn-soft);
+      }
+      .callout.cite {
+        border-left: 2px solid var(--accent);
+        border-top: none; border-right: none; border-bottom: none;
+        background: var(--accent-faint);
+        padding-left: 22px;
+        font-style: italic;
+      }
+      .callout-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .callout.warn .callout-label { color: var(--warn); }
+      .cite-source {
+        font-style: normal;
+        font-size: 12px;
+        color: var(--ink-faint);
+        margin-top: 10px;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+      }
+
+      /* ─── Figure / Diagram ─── */
+      figure {
+        margin: 28px 0 32px;
+        border: 1px solid var(--rule);
+        background: #fff;
+      }
+      figure svg { display: block; width: 100%; height: auto; }
+      figure img { display: block; width: 100%; height: auto; }
+      figcaption {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        padding: 10px 16px;
+        border-top: 1px solid var(--rule-soft);
+        background: var(--paper-edge);
+      }
+      figcaption .fig-num {
+        color: var(--accent);
+        margin-right: 10px;
+        font-weight: 600;
+      }
+
+      /* ─── N-column concept cards ─── */
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin: 20px 0 18px;
+      }
+      .cards.cols-2 { grid-template-columns: repeat(2, 1fr); }
+      .cards.cols-4 { grid-template-columns: repeat(4, 1fr); }
+      .card {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 16px 14px;
+      }
+      .card-icon {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .card-name {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 17px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .card-where {
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-style: italic;
+        margin-bottom: 10px;
+      }
+      .card-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+
+      /* tone variants for cards */
+      .card.tone-a .card-icon { color: var(--brain); }
+      .card.tone-b .card-icon { color: var(--hands); }
+      .card.tone-c .card-icon { color: var(--session); }
+
+      /* ─── Buttons / Inputs (for interactive sections) ─── */
+      .btn {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 8px 14px;
+        background: #fff;
+        color: var(--ink);
+        border: 1px solid var(--rule);
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn:hover { background: var(--paper-edge); }
+      .btn.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .btn.primary:hover { background: #5a87a4; }
+
+      input[type="text"], input[type="email"], textarea, select {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 14px;
+        padding: 8px 12px;
+        background: #fff;
+        border: 1px solid var(--rule);
+        color: var(--ink);
+        width: 100%;
+        margin-bottom: 10px;
+      }
+      input:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      /* ─── Footer ─── */
+      footer {
+        margin-top: 80px;
+        padding-top: 24px;
+        border-top: 1px solid var(--rule);
+        font-size: 12px;
+        color: var(--ink-faint);
+      }
+      footer h4 {
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        margin-bottom: 10px;
+        color: var(--ink-soft);
+      }
+      footer ul { list-style: none; margin-left: 0; }
+      footer li { margin-bottom: 4px; }
+
+      .mascot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+
+      @media (max-width: 720px) {
+        body { padding: 32px 16px 64px; }
+        .doc-title { font-size: 26px; }
+        .cards, .cards.cols-2, .cards.cols-4 { grid-template-columns: 1fr; }
+        .doc-meta { flex-wrap: wrap; gap: 12px; }
+      }
+    
+
+      .source-note {
+        border-top: 1px solid var(--rule);
+        color: var(--ink-faint);
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        margin-top: 56px;
+        padding-top: 14px;
+        text-transform: uppercase;
+      }
+</style>
+  </head>
+  <body>
+    <article class="doc">
+      <header class="doc-header">
+        <div class="doc-eyebrow"><span class="mascot"></span>Nodejs · Migrated Article</div>
+        <h1 class="doc-title">Module</h1>
+        <p class="doc-subtitle">模块的细致讲解</p>
+        <div class="doc-meta">
+          <span>DATE · 2023-01-01</span>
+          <span>TAGS · Nodejs, Backend, Server, Frontend, Module, Pack</span>
+          <span>SOURCE · old blog</span>
+        </div>
+      </header>
+
+      <div class="tldr">
+        <div class="tldr-label">TL;DR</div>
+        模块的细致讲解
+      </div>
+
+      <section>
+<h2><span class="num">01</span>Module 的加载实现</h2>
+<h3>1. 浏览器加载</h3>
+<h4>传统方法</h4>
+<p>HTML 网页中，浏览器通过<code>&lt;script&gt;</code>标签加载 JavaScript 脚本。</p>
+<pre><code data-language="html">&lt;!-- 页面内嵌的脚本 --&gt;
+&lt;script type=&quot;application/javascript&quot;&gt;
+  // module code
+&lt;/script&gt;
+
+&lt;!-- 外部脚本 --&gt;
+&lt;script type=&quot;application/javascript&quot; src=&quot;path/to/myModule.js&quot;&gt;
+&lt;/script&gt;</code></pre>
+<p>上面代码中，由于浏览器脚本的默认语言是 JavaScript，因此<code>type=&quot;application/javascript&quot;</code>可以省略。</p>
+<p>默认情况下，浏览器是同步加载 JavaScript 脚本，即渲染引擎遇到<code>&lt;script&gt;</code>标签就会停下来，等到执行完脚本，再继续向下渲染。如果是外部脚本，还必须加入脚本下载的时间。</p>
+<p>如果脚本体积很大，下载和执行的时间就会很长，因此造成浏览器堵塞，用户会感觉到浏览器“卡死”了，没有任何响应。这显然是很不好的体验，所以浏览器允许脚本异步加载，下面就是两种异步加载的语法。</p>
+<pre><code data-language="html">&lt;script src=&quot;path/to/myModule.js&quot; defer&gt;&lt;/script&gt;
+&lt;script src=&quot;path/to/myModule.js&quot; async&gt;&lt;/script&gt;</code></pre>
+<p>上面代码中，<code>&lt;script&gt;</code>标签打开<code>defer</code>或<code>async</code>属性，脚本就会异步加载。渲染引擎遇到这一行命令，就会开始下载外部脚本，但不会等它下载和执行，而是直接执行后面的命令。</p>
+<p><code>defer</code>与<code>async</code>的区别是：<code>defer</code>要等到整个页面在内存中正常渲染结束（DOM 结构完全生成，以及其他脚本执行完成），才会执行；<code>async</code>一旦下载完，渲染引擎就会中断渲染，执行这个脚本以后，再继续渲染。一句话，<code>defer</code>是“渲染完再执行”，<code>async</code>是“下载完就执行”。另外，如果有多个<code>defer</code>脚本，会按照它们在页面出现的顺序加载，而多个<code>async</code>脚本是不能保证加载顺序的。</p>
+<h4>加载规则</h4>
+<p>浏览器加载 ES6 模块，也使用<code>&lt;script&gt;</code>标签，但是要加入<code>type=&quot;module&quot;</code>属性。</p>
+<pre><code data-language="html">&lt;script type=&quot;module&quot; src=&quot;./foo.js&quot;&gt;&lt;/script&gt;</code></pre>
+<p>上面代码在网页中插入一个模块<code>foo.js</code>，由于<code>type</code>属性设为<code>module</code>，所以浏览器知道这是一个 ES6 模块。</p>
+<p>浏览器对于带有<code>type=&quot;module&quot;</code>的<code>&lt;script&gt;</code>，都是异步加载，不会造成堵塞浏览器，即等到整个页面渲染完，再执行模块脚本，等同于打开了<code>&lt;script&gt;</code>标签的<code>defer</code>属性。</p>
+<pre><code data-language="html">&lt;script type=&quot;module&quot; src=&quot;./foo.js&quot;&gt;&lt;/script&gt;
+&lt;!-- 等同于 --&gt;
+&lt;script type=&quot;module&quot; src=&quot;./foo.js&quot; defer&gt;&lt;/script&gt;</code></pre>
+<p>如果网页有多个<code>&lt;script type=&quot;module&quot;&gt;</code>，它们会按照在页面出现的顺序依次执行。</p>
+<p><code>&lt;script&gt;</code>标签的async属性也可以打开，这时只要加载完成，渲染引擎就会中断渲染立即执行。执行完成后，再恢复渲染。</p>
+<pre><code data-language="html">&lt;script type=&quot;module&quot; src=&quot;./foo.js&quot; async&gt;&lt;/script&gt;
+</code></pre>
+<p>一旦使用了<code>async</code>属性，<code>&lt;script type=&quot;module&quot;&gt;</code>就不会按照在页面出现的顺序执行，而是只要该模块加载完成，就执行该模块。</p>
+<p>ES6 模块也允许内嵌在网页中，语法行为与加载外部脚本完全一致。</p>
+<pre><code data-language="html">&lt;script type=&quot;module&quot;&gt;
+  import utils from &quot;./utils.js&quot;;
+
+  // other code
+&lt;/script&gt;</code></pre>
+<p>举例来说，jQuery 就支持模块加载。</p>
+<pre><code data-language="html">&lt;script type=&quot;module&quot;&gt;
+  import $ from &quot;./jquery/src/jquery.js&quot;;
+  $(&#39;#message&#39;).text(&#39;Hi from jQuery!&#39;);
+&lt;/script&gt;</code></pre>
+<p>对于外部的模块脚本（上例是<code>foo.js</code>），有几点需要注意。</p>
+<ul>
+  <li>代码是在模块作用域之中运行，而不是在全局作用域运行。模块内部的顶层变量，外部不可见。</li>
+  <li>模块脚本自动采用严格模式，不管有没有声明<code>use strict</code>。</li>
+  <li>模块之中，可以使用<code>import</code>命令加载其他模块（<code>.js</code>后缀不可省略，需要提供绝对 URL 或相对 URL），也可以使用<code>export</code>命令输出对外接口。</li>
+  <li>模块之中，顶层的<code>this</code>关键字返回<code>undefined</code>，而不是指向<code>window</code>。也就是说，在模块顶层使用<code>this</code>关键字，是无意义的。</li>
+  <li>同一个模块如果加载多次，将只执行一次。</li>
+</ul>
+<p>下面是一个示例模块。</p>
+<pre><code data-language="javascript">import utils from &#39;https://example.com/js/utils.js&#39;;
+
+const x = 1;
+
+console.log(x === window.x); //false
+console.log(this === undefined); // true</code></pre>
+<p>利用顶层的<code>this</code>等于<code>undefined</code>这个语法点，可以侦测当前代码是否在 ES6 模块之中。</p>
+<pre><code data-language="javascript">const isNotModuleScript = this !== undefined;</code></pre>
+<h3>2. ES6 模块与 CommonJS 模块的差异</h3>
+<p>讨论 Node.js 加载 ES6 模块之前，必须了解 ES6 模块与 CommonJS 模块完全不同。</p>
+<p>它们有三个重大差异。</p>
+<ul>
+  <li>CommonJS 模块输出的是一个值的拷贝，ES6 模块输出的是值的引用。</li>
+  <li>CommonJS 模块是运行时加载，ES6 模块是编译时输出接口。</li>
+  <li>CommonJS 模块的<code>require()</code>是同步加载模块，ES6 模块的<code>import</code>命令是异步加载，有一个独立的模块依赖的解析阶段。</li>
+</ul>
+<p>第二个差异是因为 CommonJS 加载的是一个对象（即<code>module.exports</code>属性），该对象只有在脚本运行完才会生成。而 ES6 模块不是对象，它的对外接口只是一种静态定义，在代码静态解析阶段就会生成。</p>
+<p>下面重点解释第一个差异。</p>
+<p>CommonJS 模块输出的是值的拷贝，也就是说，一旦输出一个值，模块内部的变化就影响不到这个值。请看下面这个模块文件<code>lib.js</code>的例子。</p>
+<pre><code data-language="javascript">// lib.js
+var counter = 3;
+function incCounter() {
+  counter++;
+}
+module.exports = {
+  counter: counter,
+  incCounter: incCounter,
+};</code></pre>
+<p>上面代码输出内部变量<code>counter</code>和改写这个变量的内部方法<code>incCounter</code>。然后，在<code>main.js</code>里面加载这个模块。</p>
+<pre><code data-language="javascript">// main.js
+var mod = require(&#39;./lib&#39;);
+
+console.log(mod.counter);  // 3
+mod.incCounter();
+console.log(mod.counter); // 3</code></pre>
+<p>上面代码说明，<code>lib.js</code>模块加载以后，它的内部变化就影响不到输出的<code>mod.counter</code>了。这是因为<code>mod.counter</code>是一个原始类型的值，会被缓存。除非写成一个函数，才能得到内部变动后的值。</p>
+<pre><code data-language="javascript">// lib.js
+var counter = 3;
+function incCounter() {
+  counter++;
+}
+module.exports = {
+  get counter() {
+    return counter
+  },
+  incCounter: incCounter,
+};</code></pre>
+<p>上面代码中，输出的<code>counter</code>属性实际上是一个取值器函数。现在再执行<code>main.js</code>，就可以正确读取内部变量<code>counter</code>的变动了。</p>
+<pre><code data-language="bash">$ node main.js
+3
+4</code></pre>
+<p>ES6 模块的运行机制与 CommonJS 不一样。JS 引擎对脚本静态分析的时候，遇到模块加载命令<code>import</code>，就会生成一个只读引用。等到脚本真正执行时，再根据这个只读引用，到被加载的那个模块里面去取值。换句话说，ES6 的<code>import</code>有点像 Unix 系统的“符号连接”，原始值变了，<code>import</code>加载的值也会跟着变。因此，ES6 模块是动态引用，并且不会缓存值，模块里面的变量绑定其所在的模块。</p>
+<p>还是举上面的例子。</p>
+<pre><code data-language="javascript">// lib.js
+export let counter = 3;
+export function incCounter() {
+  counter++;
+}
+
+// main.js
+import { counter, incCounter } from &#39;./lib&#39;;
+console.log(counter); // 3
+incCounter();
+console.log(counter); // 4</code></pre>
+<p>上面代码说明，ES6 模块输入的变量<code>counter</code>是活的，完全反应其所在模块<code>lib.js</code>内部的变化。</p>
+<p>再举一个出现在<code>export</code>一节中的例子。</p>
+<pre><code data-language="javascript">// m1.js
+export var foo = &#39;bar&#39;;
+setTimeout(() =&gt; foo = &#39;baz&#39;, 500);
+
+// m2.js
+import {foo} from &#39;./m1.js&#39;;
+console.log(foo);
+setTimeout(() =&gt; console.log(foo), 500);</code></pre>
+<p>上面代码中，<code>m1.js</code>的变量<code>foo</code>，在刚加载时等于<code>bar</code>，过了 500 毫秒，又变为等于<code>baz</code>。</p>
+<p>让我们看看，<code>m2.js</code>能否正确读取这个变化。</p>
+<pre><code data-language="bash">$ babel-node m2.js
+
+bar
+baz</code></pre>
+<p>上面代码表明，ES6 模块不会缓存运行结果，而是动态地去被加载的模块取值，并且变量总是绑定其所在的模块。</p>
+<p>由于 ES6 输入的模块变量，只是一个“符号连接”，所以这个变量是只读的，对它进行重新赋值会报错。</p>
+<pre><code data-language="javascript">// lib.js
+export let obj = {};
+
+// main.js
+import { obj } from &#39;./lib&#39;;
+
+obj.prop = 123; // OK
+obj = {}; // TypeError</code></pre>
+<p>上面代码中，<code>main.js</code>从<code>lib.js</code>输入变量<code>obj</code>，可以对<code>obj</code>添加属性，但是重新赋值就会报错。因为变量<code>obj</code>指向的地址是只读的，不能重新赋值，这就好比<code>main.js</code>创造了一个名为<code>obj</code>的<code>const</code>变量。</p>
+<p>最后，<code>export</code>通过接口，输出的是同一个值。不同的脚本加载这个接口，得到的都是同样的实例。</p>
+<pre><code data-language="javascript">// mod.js
+function C() {
+  this.sum = 0;
+  this.add = function () {
+    this.sum += 1;
+  };
+  this.show = function () {
+    console.log(this.sum);
+  };
+}
+
+export let c = new C();</code></pre>
+<p>上面的脚本<code>mod.js</code>，输出的是一个<code>C</code>的实例。不同的脚本加载这个模块，得到的都是同一个实例。</p>
+<pre><code data-language="javascript">// x.js
+import {c} from &#39;./mod&#39;;
+c.add();
+
+// y.js
+import {c} from &#39;./mod&#39;;
+c.show();
+
+// main.js
+import &#39;./x&#39;;
+import &#39;./y&#39;;</code></pre>
+<p>现在执行<code>main.js</code>，输出的是<code>1</code>。</p>
+<pre><code data-language="bash">$ babel-node main.js
+1</code></pre>
+<p>这就证明了<code>x.js</code>和<code>y.js</code>加载的都是<code>C</code>的同一个实例。</p>
+<h3>3.Node.js 的模块加载方法</h3>
+<h4>概述</h4>
+<p>JavaScript 现在有两种模块。一种是 ES6 模块，简称 ESM；另一种是 CommonJS 模块，简称 CJS。</p>
+<p>CommonJS 模块是 Node.js 专用的，与 ES6 模块不兼容。语法上面，两者最明显的差异是，CommonJS 模块使用<code>require()</code>和<code>module.exports</code>，ES6 模块使用<code>import</code>和<code>export</code>。</p>
+<p>它们采用不同的加载方案。从 Node.js v13.2 版本开始，Node.js 已经默认打开了 ES6 模块支持。</p>
+<p>Node.js 要求 ES6 模块采用<code>.mjs</code>后缀文件名。也就是说，只要脚本文件里面使用<code>import</code>或者<code>export</code>命令，那么就必须采用<code>.mjs</code>后缀名。Node.js 遇到<code>.mjs</code>文件，就认为它是 ES6 模块，默认启用严格模式，不必在每个模块文件顶部指定<code>&quot;use strict&quot;</code>。</p>
+<p>如果不希望将后缀名改成<code>.mjs</code>，可以在项目的<code>package.json</code>文件中，指定<code>type</code>字段为<code>module</code>。</p>
+<pre><code data-language="javascript">{
+   &quot;type&quot;: &quot;module&quot;
+}</code></pre>
+<p>一旦设置了以后，该项目的 JS 脚本，就被解释成 ES6 模块。</p>
+<pre><code data-language="bash"># 解释成 ES6 模块
+$ node my-app.js</code></pre>
+<p>如果这时还要使用 CommonJS 模块，那么需要将 CommonJS 脚本的后缀名都改成<code>.cjs</code>。如果没有<code>type</code>字段，或者<code>type</code>字段为<code>commonjs</code>，则<code>.js</code>脚本会被解释成 CommonJS 模块。</p>
+<p>总结为一句话：<code>.mjs</code>文件总是以 ES6 模块加载，<code>.cjs</code>文件总是以 CommonJS 模块加载，<code>.js</code>文件的加载取决于<code>package.json</code>里面<code>type</code>字段的设置。</p>
+<p>注意，ES6 模块与 CommonJS 模块尽量不要混用。<code>require</code>命令不能加载<code>.mjs</code>文件，会报错，只有<code>import</code>命令才可以加载<code>.mjs</code>文件。反过来，<code>.mjs</code>文件里面也不能使用<code>require</code>命令，必须使用<code>import</code>。</p>
+<h4>package.json 的 main 字段</h4>
+<p><code>package.json</code>文件有两个字段可以指定模块的入口文件：<code>main</code>和<code>exports</code>。比较简单的模块，可以只使用<code>main</code>字段，指定模块加载的入口文件。</p>
+<pre><code data-language="javascript">// ./node_modules/es-module-package/package.json
+{
+  &quot;type&quot;: &quot;module&quot;,
+  &quot;main&quot;: &quot;./src/index.js&quot;
+}</code></pre>
+<p>上面代码指定项目的入口脚本为<code>./src/index.js</code>，它的格式为 ES6 模块。如果没有<code>type</code>字段，<code>index.js</code>就会被解释为 CommonJS 模块。</p>
+<p>然后，<code>import</code>命令就可以加载这个模块。</p>
+<pre><code data-language="javascript">// ./my-app.mjs
+
+import { something } from &#39;es-module-package&#39;;
+// 实际加载的是 ./node_modules/es-module-package/src/index.js</code></pre>
+<p>上面代码中，运行该脚本以后，Node.js 就会到<code>./node_modules</code>目录下面，寻找<code>es-module-package</code>模块，然后根据该模块<code>package.json</code>的<code>main</code>字段去执行入口文件。</p>
+<p>这时，如果用 CommonJS 模块的<code>require()</code>命令去加载<code>es-module-package</code>模块会报错，因为 CommonJS 模块不能处理<code>export</code>命令。</p>
+<h4>package.json 的 exports 字段</h4>
+<p><code>exports</code>字段的优先级高于<code>main</code>字段。它有多种用法。</p>
+<p>（1）子目录别名</p>
+<p><code>package.json</code>文件的<code>exports</code>字段可以指定脚本或子目录的别名。</p>
+<pre><code data-language="javascript">// ./node_modules/es-module-package/package.json
+{
+  &quot;exports&quot;: {
+    &quot;./submodule&quot;: &quot;./src/submodule.js&quot;
+  }
+}</code></pre>
+<p>上面的代码指定<code>src/submodule.js</code>别名为<code>submodule</code>，然后就可以从别名加载这个文件。</p>
+<pre><code data-language="javascript">import submodule from &#39;es-module-package/submodule&#39;;
+// 加载 ./node_modules/es-module-package/src/submodule.js</code></pre>
+<p>下面是子目录别名的例子。</p>
+<pre><code data-language="javascript">// ./node_modules/es-module-package/package.json
+{
+  &quot;exports&quot;: {
+    &quot;./features/&quot;: &quot;./src/features/&quot;
+  }
+}
+
+import feature from &#39;es-module-package/features/x.js&#39;;
+// 加载 ./node_modules/es-module-package/src/features/x.js</code></pre>
+<p>如果没有指定别名，就不能用“模块+脚本名”这种形式加载脚本。</p>
+<pre><code data-language="javascript">// 报错
+import submodule from &#39;es-module-package/private-module.js&#39;;
+
+// 不报错
+import submodule from &#39;./node_modules/es-module-package/private-module.js&#39;;</code></pre>
+<p>（2）main 的别名</p>
+<p><code>exports</code>字段的别名如果是<code>.</code>，就代表模块的主入口，优先级高于<code>main</code>字段，并且可以直接简写成<code>exports</code>字段的值。</p>
+<pre><code data-language="javascript">{
+  &quot;exports&quot;: {
+    &quot;.&quot;: &quot;./main.js&quot;
+  }
+}
+
+// 等同于
+{
+  &quot;exports&quot;: &quot;./main.js&quot;
+}</code></pre>
+<p>由于<code>exports</code>字段只有支持 ES6 的 Node.js 才认识，所以可以用来兼容旧版本的 Node.js。</p>
+<pre><code data-language="javascript">{
+  &quot;main&quot;: &quot;./main-legacy.cjs&quot;,
+  &quot;exports&quot;: {
+    &quot;.&quot;: &quot;./main-modern.cjs&quot;
+  }
+}</code></pre>
+<p>上面代码中，老版本的 Node.js （不支持 ES6 模块）的入口文件是<code>main-legacy.cjs</code>，新版本的 Node.js 的入口文件是<code>main-modern.cjs</code>。</p>
+<p><strong>（3）条件加载</strong></p>
+<p>利用<code>.</code>这个别名，可以为 ES6 模块和 CommonJS 指定不同的入口。</p>
+<pre><code data-language="javascript">{
+  &quot;type&quot;: &quot;module&quot;,
+  &quot;exports&quot;: {
+    &quot;.&quot;: {
+      &quot;require&quot;: &quot;./main.cjs&quot;,
+      &quot;default&quot;: &quot;./main.js&quot;
+    }
+  }
+}</code></pre>
+<p>上面代码中，别名<code>.</code>的<code>require</code>条件指定<code>require()</code>命令的入口文件（即 CommonJS 的入口），<code>default</code>条件指定其他情况的入口（即 ES6 的入口）。</p>
+<p>上面的写法可以简写如下。</p>
+<pre><code data-language="javascript">{
+  &quot;exports&quot;: {
+    &quot;require&quot;: &quot;./main.cjs&quot;,
+    &quot;default&quot;: &quot;./main.js&quot;
+  }
+}</code></pre>
+<p>注意，如果同时还有其他别名，就不能采用简写，否则会报错。</p>
+<pre><code data-language="javascript">{
+  // 报错
+  &quot;exports&quot;: {
+    &quot;./feature&quot;: &quot;./lib/feature.js&quot;,
+    &quot;require&quot;: &quot;./main.cjs&quot;,
+    &quot;default&quot;: &quot;./main.js&quot;
+  }
+}</code></pre>
+<h4>CommonJS 模块加载 ES6 模块</h4>
+<p>CommonJS 的<code>require()</code>命令不能加载 ES6 模块，会报错，只能使用<code>import()</code>这个方法加载。</p>
+<pre><code data-language="javascript">(async () =&gt; {
+  await import(&#39;./my-app.mjs&#39;);
+})();</code></pre>
+<p>上面代码可以在 CommonJS 模块中运行。</p>
+<p><code>require()</code>不支持 ES6 模块的一个原因是，它是同步加载，而 ES6 模块内部可以使用顶层<code>await</code>命令，导致无法被同步加载。</p>
+<h4>ES6 模块加载 CommonJS 模块</h4>
+<p>ES6 模块的<code>import</code>命令可以加载 CommonJS 模块，但是只能整体加载，不能只加载单一的输出项。</p>
+<pre><code data-language="javascript">// 正确
+import packageMain from &#39;commonjs-package&#39;;
+
+// 报错
+import { method } from &#39;commonjs-package&#39;;</code></pre>
+<p>这是因为 ES6 模块需要支持静态代码分析，而 CommonJS 模块的输出接口是<code>module.exports</code>，是一个对象，无法被静态分析，所以只能整体加载。</p>
+<p>加载单一的输出项，可以写成下面这样。</p>
+<pre><code data-language="javascript">import packageMain from &#39;commonjs-package&#39;;
+const { method } = packageMain;</code></pre>
+<p>还有一种变通的加载方法，就是使用 Node.js 内置的<code>module.createRequire()</code>方法。</p>
+<pre><code data-language="javascript">// cjs.cjs
+module.exports = &#39;cjs&#39;;
+
+// esm.mjs
+import { createRequire } from &#39;module&#39;;
+
+const require = createRequire(import.meta.url);
+
+const cjs = require(&#39;./cjs.cjs&#39;);
+cjs === &#39;cjs&#39;; // true</code></pre>
+<p>上面代码中，ES6 模块通过<code>module.createRequire()</code>方法可以加载 CommonJS 模块。但是，这种写法等于将 ES6 和 CommonJS 混在一起了，所以不建议使用。</p>
+<h4>同时支持两种格式的模块</h4>
+<p>一个模块同时要支持 CommonJS 和 ES6 两种格式，也很容易。</p>
+<p>如果原始模块是 ES6 格式，那么需要给出一个整体输出接口，比如<code>export default obj</code>，使得 CommonJS 可以用<code>import()</code>进行加载。</p>
+<p>如果原始模块是 CommonJS 格式，那么可以加一个包装层。</p>
+<pre><code data-language="javascript">import cjsModule from &#39;../index.js&#39;;
+export const foo = cjsModule.foo;</code></pre>
+<p>上面代码先整体输入 CommonJS 模块，然后再根据需要输出具名接口。</p>
+<p>你可以把这个文件的后缀名改为<code>.mjs</code>，或者将它放在一个子目录，再在这个子目录里面放一个单独的<code>package.json</code>文件，指明<code>{ type: &quot;module&quot; }</code>。</p>
+<p>另一种做法是在<code>package.json</code>文件的<code>exports</code>字段，指明两种格式模块各自的加载入口。</p>
+<pre><code data-language="javascript">&quot;exports&quot;：{
+  &quot;require&quot;: &quot;./index.js&quot;，
+  &quot;import&quot;: &quot;./esm/wrapper.js&quot;
+}</code></pre>
+<p>上面代码指定<code>require()</code>和<code>import</code>，加载该模块会自动切换到不一样的入口文件。</p>
+<h4>Node.js 的内置模块</h4>
+<p>Node.js 的内置模块可以整体加载，也可以加载指定的输出项。</p>
+<pre><code data-language="javascript">// 整体加载
+import EventEmitter from &#39;events&#39;;
+const e = new EventEmitter();
+
+// 加载指定的输出项
+import { readFile } from &#39;fs&#39;;
+readFile(&#39;./foo.txt&#39;, (err, source) =&gt; {
+  if (err) {
+    console.error(err);
+  } else {
+    console.log(source);
+  }
+});</code></pre>
+<h4>加载路径</h4>
+<p>ES6 模块的加载路径必须给出脚本的完整路径，不能省略脚本的后缀名。<code>import</code>命令和<code>package.json</code>文件的<code>main</code>字段如果省略脚本的后缀名，会报错。</p>
+<pre><code data-language="javascript">// ES6 模块中将报错
+import { something } from &#39;./index&#39;;</code></pre>
+<p>为了与浏览器的<code>import</code>加载规则相同，Node.js 的<code>.mjs</code>文件支持 URL 路径。</p>
+<pre><code data-language="javascript">import &#39;./foo.mjs?query=1&#39;; // 加载 ./foo 传入参数 ?query=1</code></pre>
+<p>上面代码中，脚本路径带有参数<code>?query=1</code>，Node 会按 URL 规则解读。同一个脚本只要参数不同，就会被加载多次，并且保存成不同的缓存。由于这个原因，只要文件名中含有<code>:</code>、<code>%</code>、<code>#</code>、<code>?</code>等特殊字符，最好对这些字符进行转义。</p>
+<p>目前，Node.js 的<code>import</code>命令只支持加载本地模块（<code>file:</code>协议）和<code>data:</code>协议，不支持加载远程模块。另外，脚本路径只支持相对路径，不支持绝对路径（即以<code>/</code>或<code>//</code>开头的路径）。</p>
+<h4>内部变量</h4>
+<p>ES6 模块应该是通用的，同一个模块不用修改，就可以用在浏览器环境和服务器环境。为了达到这个目标，Node.js 规定 ES6 模块之中不能使用 CommonJS 模块的特有的一些内部变量。</p>
+<p>首先，就是<code>this</code>关键字。ES6 模块之中，顶层的<code>this</code>指向<code>undefined</code>；CommonJS 模块的顶层<code>this</code>指向当前模块，这是两者的一个重大差异。</p>
+<p>其次，以下这些顶层变量在 ES6 模块之中都是不存在的。</p>
+<ul>
+  <li><code>arguments</code></li>
+  <li><code>require</code></li>
+  <li><code>module</code></li>
+  <li><code>exports</code></li>
+  <li><code>__filename</code></li>
+  <li><code>__dirname</code></li>
+</ul>
+<h3>循环加载</h3>
+<p>“循环加载”（circular dependency）指的是，<code>a</code>脚本的执行依赖<code>b</code>脚本，而<code>b</code>脚本的执行又依赖<code>a</code>脚本。</p>
+<pre><code data-language="javascript">// a.js
+var b = require(&#39;b&#39;);
+
+// b.js
+var a = require(&#39;a&#39;);</code></pre>
+<p>通常，“循环加载”表示存在强耦合，如果处理不好，还可能导致递归加载，使得程序无法执行，因此应该避免出现。</p>
+<p>但是实际上，这是很难避免的，尤其是依赖关系复杂的大项目，很容易出现<code>a</code>依赖<code>b</code>，<code>b</code>依赖<code>c</code>，<code>c</code>又依赖<code>a</code>这样的情况。这意味着，模块加载机制必须考虑“循环加载”的情况。</p>
+<p>对于 JavaScript 语言来说，目前最常见的两种模块格式 CommonJS 和 ES6，处理“循环加载”的方法是不一样的，返回的结果也不一样。</p>
+<h4>CommonJS 模块的加载原理</h4>
+<p>介绍 ES6 如何处理“循环加载”之前，先介绍目前最流行的 CommonJS 模块格式的加载原理。</p>
+<p>CommonJS 的一个模块，就是一个脚本文件。<code>require</code>命令第一次加载该脚本，就会执行整个脚本，然后在内存生成一个对象。</p>
+<pre><code data-language="javascript">{
+  id: &#39;...&#39;,
+  exports: { ... },
+  loaded: true,
+  ...
+}</code></pre>
+<p>上面代码就是 Node 内部加载模块后生成的一个对象。该对象的<code>id</code>属性是模块名，<code>exports</code>属性是模块输出的各个接口，<code>loaded</code>属性是一个布尔值，表示该模块的脚本是否执行完毕。其他还有很多属性，这里都省略了。</p>
+<p>以后需要用到这个模块的时候，就会到<code>exports</code>属性上面取值。即使再次执行<code>require</code>命令，也不会再次执行该模块，而是到缓存之中取值。也就是说，CommonJS 模块无论加载多少次，都只会在第一次加载时运行一次，以后再加载，就返回第一次运行的结果，除非手动清除系统缓存。</p>
+<h4>CommonJS 模块的循环加载</h4>
+<p>CommonJS 模块的重要特性是加载时执行，即脚本代码在<code>require</code>的时候，就会全部执行。一旦出现某个模块被&quot;循环加载&quot;，就只输出已经执行的部分，还未执行的部分不会输出。</p>
+<p>让我们来看，Node <a href="https://nodejs.org/api/modules.html#modules_cycles">官方文档</a>里面的例子。脚本文件<code>a.js</code>代码如下。</p>
+<pre><code data-language="javascript">exports.done = false;
+var b = require(&#39;./b.js&#39;);
+console.log(&#39;在 a.js 之中，b.done = %j&#39;, b.done);
+exports.done = true;
+console.log(&#39;a.js 执行完毕&#39;);</code></pre>
+<p>上面代码之中，<code>a.js</code>脚本先输出一个<code>done</code>变量，然后加载另一个脚本文件<code>b.js</code>。注意，此时<code>a.js</code>代码就停在这里，等待<code>b.js</code>执行完毕，再往下执行。</p>
+<p>再看<code>b.js</code>的代码。</p>
+<pre><code data-language="javascript">exports.done = false;
+var a = require(&#39;./a.js&#39;);
+console.log(&#39;在 b.js 之中，a.done = %j&#39;, a.done);
+exports.done = true;
+console.log(&#39;b.js 执行完毕&#39;);</code></pre>
+<p>上面代码之中，<code>b.js</code>执行到第二行，就会去加载<code>a.js</code>，这时，就发生了“循环加载”。系统会去<code>a.js</code>模块对应对象的<code>exports</code>属性取值，可是因为<code>a.js</code>还没有执行完，从<code>exports</code>属性只能取回已经执行的部分，而不是最后的值。</p>
+<p><code>a.js</code>已经执行的部分，只有一行。</p>
+<pre><code data-language="javascript">exports.done = false;</code></pre>
+<p>因此，对于<code>b.js</code>来说，它从<code>a.js</code>只输入一个变量<code>done</code>，值为<code>false</code>。</p>
+<p>然后，<code>b.js</code>接着往下执行，等到全部执行完毕，再把执行权交还给<code>a.js</code>。于是，<code>a.js</code>接着往下执行，直到执行完毕。我们写一个脚本<code>main.js</code>，验证这个过程。</p>
+<pre><code data-language="javascript">var a = require(&#39;./a.js&#39;);
+var b = require(&#39;./b.js&#39;);
+console.log(&#39;在 main.js 之中, a.done=%j, b.done=%j&#39;, a.done, b.done);</code></pre>
+<p>执行<code>main.js</code>，运行结果如下。</p>
+<pre><code data-language="bash">$ node main.js
+
+在 b.js 之中，a.done = false
+b.js 执行完毕
+在 a.js 之中，b.done = true
+a.js 执行完毕
+在 main.js 之中, a.done=true, b.done=true</code></pre>
+<p>上面的代码证明了两件事。一是，在<code>b.js</code>之中，<code>a.js</code>没有执行完毕，只执行了第一行。二是，<code>main.js</code>执行到第二行时，不会再次执行<code>b.js</code>，而是输出缓存的<code>b.js</code>的执行结果，即它的第四行。</p>
+<pre><code data-language="javascript">exports.done = true;</code></pre>
+<p>总之，CommonJS 输入的是被输出值的拷贝，不是引用。</p>
+<p>另外，由于 CommonJS 模块遇到循环加载时，返回的是当前已经执行的部分的值，而不是代码全部执行后的值，两者可能会有差异。所以，输入变量的时候，必须非常小心。</p>
+<pre><code data-language="javascript">var a = require(&#39;a&#39;); // 安全的写法
+var foo = require(&#39;a&#39;).foo; // 危险的写法
+
+exports.good = function (arg) {
+  return a.foo(&#39;good&#39;, arg); // 使用的是 a.foo 的最新值
+};
+
+exports.bad = function (arg) {
+  return foo(&#39;bad&#39;, arg); // 使用的是一个部分加载时的值
+};</code></pre>
+<p>上面代码中，如果发生循环加载，<code>require(&#39;a&#39;).foo</code>的值很可能后面会被改写，改用<code>require(&#39;a&#39;)</code>会更保险一点。</p>
+<h4>ES6 模块的循环加载</h4>
+<p>ES6 处理“循环加载”与 CommonJS 有本质的不同。ES6 模块是动态引用，如果使用<code>import</code>从一个模块加载变量（即<code>import foo from &#39;foo&#39;</code>），那些变量不会被缓存，而是成为一个指向被加载模块的引用，需要开发者自己保证，真正取值的时候能够取到值。</p>
+<p>请看下面这个例子。</p>
+<pre><code data-language="javascript">// a.mjs
+import {bar} from &#39;./b&#39;;
+console.log(&#39;a.mjs&#39;);
+console.log(bar);
+export let foo = &#39;foo&#39;;
+
+// b.mjs
+import {foo} from &#39;./a&#39;;
+console.log(&#39;b.mjs&#39;);
+console.log(foo);
+export let bar = &#39;bar&#39;;</code></pre>
+<p>上面代码中，<code>a.mjs</code>加载<code>b.mjs</code>，<code>b.mjs</code>又加载<code>a.mjs</code>，构成循环加载。执行<code>a.mjs</code>，结果如下。</p>
+<pre><code data-language="bash">$ node --experimental-modules a.mjs
+b.mjs
+ReferenceError: foo is not defined</code></pre>
+<p>上面代码中，执行<code>a.mjs</code>以后会报错，<code>foo</code>变量未定义，这是为什么？</p>
+<p>让我们一行行来看，ES6 循环加载是怎么处理的。首先，执行<code>a.mjs</code>以后，引擎发现它加载了<code>b.mjs</code>，因此会优先执行<code>b.mjs</code>，然后再执行<code>a.mjs</code>。接着，执行<code>b.mjs</code>的时候，已知它从<code>a.mjs</code>输入了<code>foo</code>接口，这时不会去执行<code>a.mjs</code>，而是认为这个接口已经存在了，继续往下执行。执行到第三行<code>console.log(foo)</code>的时候，才发现这个接口根本没定义，因此报错。</p>
+<p>解决这个问题的方法，就是让<code>b.mjs</code>运行的时候，<code>foo</code>已经有定义了。这可以通过将<code>foo</code>写成函数来解决。</p>
+<pre><code data-language="javascript">// a.mjs
+import {bar} from &#39;./b&#39;;
+console.log(&#39;a.mjs&#39;);
+console.log(bar());
+function foo() { return &#39;foo&#39; }
+export {foo};
+
+// b.mjs
+import {foo} from &#39;./a&#39;;
+console.log(&#39;b.mjs&#39;);
+console.log(foo());
+function bar() { return &#39;bar&#39; }
+export {bar};</code></pre>
+<p>这时再执行<code>a.mjs</code>就可以得到预期结果。</p>
+<pre><code data-language="bash">$ node --experimental-modules a.mjs
+b.mjs
+foo
+a.mjs
+bar</code></pre>
+<p>这是因为函数具有提升作用，在执行<code>import {bar} from &#39;./b&#39;</code>时，函数<code>foo</code>就已经有定义了，所以<code>b.mjs</code>加载的时候不会报错。这也意味着，如果把函数<code>foo</code>改写成函数表达式，也会报错。</p>
+<pre><code data-language="javascript">// a.mjs
+import {bar} from &#39;./b&#39;;
+console.log(&#39;a.mjs&#39;);
+console.log(bar());
+const foo = () =&gt; &#39;foo&#39;;
+export {foo};</code></pre>
+<p>上面代码的第四行，改成了函数表达式，就不具有提升作用，执行就会报错。</p>
+<p>我们再来看 ES6 模块加载器<a href="https://github.com/ModuleLoader/es6-module-loader/blob/master/docs/circular-references-bindings.md">SystemJS</a>给出的一个例子。</p>
+<pre><code data-language="javascript">// even.js
+import { odd } from &#39;./odd&#39;
+export var counter = 0;
+export function even(n) {
+  counter++;
+  return n === 0 || odd(n - 1);
+}
+
+// odd.js
+import { even } from &#39;./even&#39;;
+export function odd(n) {
+  return n !== 0 &amp;&amp; even(n - 1);
+}</code></pre>
+<p>上面代码中，<code>even.js</code>里面的函数<code>even</code>有一个参数<code>n</code>，只要不等于 0，就会减去 1，传入加载的<code>odd()</code>。<code>odd.js</code>也会做类似操作。</p>
+<p>运行上面这段代码，结果如下。</p>
+<pre><code data-language="javascript">$ babel-node
+&gt; import * as m from &#39;./even.js&#39;;
+&gt; m.even(10);
+true
+&gt; m.counter
+6
+&gt; m.even(20)
+true
+&gt; m.counter
+17</code></pre>
+<p>上面代码中，参数<code>n</code>从 10 变为 0 的过程中，<code>even()</code>一共会执行 6 次，所以变量<code>counter</code>等于 6。第二次调用<code>even()</code>时，参数<code>n</code>从 20 变为 0，<code>even()</code>一共会执行 11 次，加上前面的 6 次，所以变量<code>counter</code>等于 17。</p>
+<p>这个例子要是改写成 CommonJS，就根本无法执行，会报错。</p>
+<pre><code data-language="javascript">// even.js
+var odd = require(&#39;./odd&#39;);
+var counter = 0;
+exports.counter = counter;
+exports.even = function (n) {
+  counter++;
+  return n == 0 || odd(n - 1);
+}
+
+// odd.js
+var even = require(&#39;./even&#39;).even;
+module.exports = function (n) {
+  return n != 0 &amp;&amp; even(n - 1);
+}</code></pre>
+<p>上面代码中，<code>even.js</code>加载<code>odd.js</code>，而<code>odd.js</code>又去加载<code>even.js</code>，形成“循环加载”。这时，执行引擎就会输出<code>even.js</code>已经执行的部分（不存在任何结果），所以在<code>odd.js</code>之中，变量<code>even</code>等于<code>undefined</code>，等到后面调用<code>even(n - 1)</code>就会报错。</p>
+<pre><code data-language="bash">$ node
+&gt; var m = require(&#39;./even&#39;);
+&gt; m.even(10)
+TypeError: even is not a function</code></pre>
+</section>
+<section>
+<h2><span class="num">02</span>注意</h2>
+<p>exports在package.json中能对应两种导入</p>
+<p>但是执行不是按照导入执行</p>
+<p>如果你的结尾为.js 那么导入按照exports的导入，执行则回去找当前package.json的type字段,如果是import的，但是type没有指定module,exports的指引又是.js结尾的 那么会按照cjs执行，页面会直接报错。</p>
+<p>Module字段属于给打包用的 node.js不支持这个规范</p>
+</section>
+
+      <div class="source-note">Migrated from data/blog/202301/Module.md</div>
+    </article>
+  </body>
+</html>

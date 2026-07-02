@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>commonjs与esm</title>
+    <meta name="description" content="前端模块化简述，很早之前就知道是啥，这里总结下" />
+    <style>
+      :root {
+        --paper: #f7f7f5;
+        --paper-edge: #efefea;
+        --ink: #1a1a1a;
+        --ink-soft: #4a4a4a;
+        --ink-faint: #7a7a7a;
+        --rule: #d8d8d2;
+        --rule-soft: #e8e8e2;
+        --accent: #6f9bb8;
+        --accent-soft: #d9e6f0;
+        --accent-faint: #eef4f8;
+        --warn: #b88a4a;
+        --warn-soft: #f5ecdc;
+        --danger: #a05050;
+        --code-bg: #ececea;
+
+        /* Semantic palette for three-layer cards. Rename freely
+           (e.g. --layer-a / --layer-b / --layer-c) when the three
+           layers in the doc are not brain/hands/session. */
+        --brain: #6f9bb8;
+        --brain-bg: #eef4f8;
+        --hands: #b88a4a;
+        --hands-bg: #f5ecdc;
+        --session: #6b7560;
+        --session-bg: #ecede5;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { font-size: 16px; }
+
+      /* Font stacks include both English serifs/monospace and CJK
+         fallbacks so the same template renders cleanly for English
+         or Chinese source content. */
+      body {
+        font-family:
+          ui-serif, "Charter", "Iowan Old Style", "Source Serif Pro", Georgia,
+          "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+        background: var(--paper);
+        color: var(--ink);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        padding: 64px 24px 96px;
+      }
+
+      .doc { max-width: 840px; margin: 0 auto; }
+
+      /* ─── Header ─── */
+      .doc-header {
+        border-bottom: 1px solid var(--rule);
+        padding-bottom: 28px;
+        margin-bottom: 48px;
+      }
+      .doc-eyebrow {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 14px;
+      }
+      .doc-title {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 34px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+      }
+      .doc-subtitle {
+        font-size: 16px;
+        color: var(--ink-soft);
+        margin-top: 10px;
+        font-style: italic;
+      }
+      .doc-meta {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        color: var(--ink-faint);
+        margin-top: 18px;
+        display: flex;
+        gap: 24px;
+      }
+
+      /* ─── TL;DR ─── */
+      .tldr {
+        background: var(--accent-faint);
+        border-left: 2px solid var(--accent);
+        padding: 20px 24px;
+        margin-bottom: 56px;
+        font-size: 15px;
+      }
+      .tldr-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      /* ─── Sections ─── */
+      section { margin-bottom: 56px; }
+      h2 {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.005em;
+        margin-bottom: 18px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--rule);
+      }
+      h2 .num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-weight: 500;
+        margin-right: 14px;
+        letter-spacing: 0.05em;
+      }
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 28px 0 10px;
+      }
+      h4 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 22px 0 8px;
+      }
+      p { margin-bottom: 14px; }
+      p + p { margin-top: -2px; }
+      a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+      a:hover { border-bottom-color: var(--accent); }
+      code {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+        background: var(--code-bg);
+        padding: 1px 5px;
+        border-radius: 2px;
+      }
+      pre {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12.5px;
+        line-height: 1.55;
+        background: var(--code-bg);
+        padding: 14px 18px;
+        margin: 14px 0 18px;
+        overflow-x: auto;
+        border-left: 2px solid var(--rule);
+      }
+      pre code { background: transparent; padding: 0; }
+      ul, ol { margin: 8px 0 16px 22px; }
+      li { margin-bottom: 6px; }
+      strong { font-weight: 600; }
+      em { color: var(--ink-soft); }
+      blockquote {
+        border-left: 2px solid var(--rule);
+        padding: 4px 0 4px 18px;
+        margin: 14px 0 18px;
+        color: var(--ink-soft);
+        font-style: italic;
+      }
+
+      /* ─── Tables ─── */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 14px 0 18px;
+        font-size: 14px;
+      }
+      th, td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--rule-soft);
+        vertical-align: top;
+      }
+      th {
+        font-weight: 600;
+        font-family:
+          ui-sans-serif, system-ui,
+          "PingFang SC", "Hiragino Sans GB", sans-serif;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--ink-faint);
+        border-bottom: 1px solid var(--rule);
+      }
+      tbody tr:hover { background: rgba(0,0,0,0.015); }
+      td.num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+      }
+      td.accent { color: var(--accent); font-weight: 500; }
+
+      /* ─── Callouts ─── */
+      .callout {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 18px;
+        margin: 16px 0 20px;
+      }
+      .callout.warn {
+        border-color: #e6d4a8;
+        background: var(--warn-soft);
+      }
+      .callout.cite {
+        border-left: 2px solid var(--accent);
+        border-top: none; border-right: none; border-bottom: none;
+        background: var(--accent-faint);
+        padding-left: 22px;
+        font-style: italic;
+      }
+      .callout-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .callout.warn .callout-label { color: var(--warn); }
+      .cite-source {
+        font-style: normal;
+        font-size: 12px;
+        color: var(--ink-faint);
+        margin-top: 10px;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+      }
+
+      /* ─── Figure / Diagram ─── */
+      figure {
+        margin: 28px 0 32px;
+        border: 1px solid var(--rule);
+        background: #fff;
+      }
+      figure svg { display: block; width: 100%; height: auto; }
+      figure img { display: block; width: 100%; height: auto; }
+      figcaption {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        padding: 10px 16px;
+        border-top: 1px solid var(--rule-soft);
+        background: var(--paper-edge);
+      }
+      figcaption .fig-num {
+        color: var(--accent);
+        margin-right: 10px;
+        font-weight: 600;
+      }
+
+      /* ─── N-column concept cards ─── */
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin: 20px 0 18px;
+      }
+      .cards.cols-2 { grid-template-columns: repeat(2, 1fr); }
+      .cards.cols-4 { grid-template-columns: repeat(4, 1fr); }
+      .card {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 16px 14px;
+      }
+      .card-icon {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .card-name {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 17px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .card-where {
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-style: italic;
+        margin-bottom: 10px;
+      }
+      .card-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+
+      /* tone variants for cards */
+      .card.tone-a .card-icon { color: var(--brain); }
+      .card.tone-b .card-icon { color: var(--hands); }
+      .card.tone-c .card-icon { color: var(--session); }
+
+      /* ─── Buttons / Inputs (for interactive sections) ─── */
+      .btn {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 8px 14px;
+        background: #fff;
+        color: var(--ink);
+        border: 1px solid var(--rule);
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn:hover { background: var(--paper-edge); }
+      .btn.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .btn.primary:hover { background: #5a87a4; }
+
+      input[type="text"], input[type="email"], textarea, select {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 14px;
+        padding: 8px 12px;
+        background: #fff;
+        border: 1px solid var(--rule);
+        color: var(--ink);
+        width: 100%;
+        margin-bottom: 10px;
+      }
+      input:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      /* ─── Footer ─── */
+      footer {
+        margin-top: 80px;
+        padding-top: 24px;
+        border-top: 1px solid var(--rule);
+        font-size: 12px;
+        color: var(--ink-faint);
+      }
+      footer h4 {
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        margin-bottom: 10px;
+        color: var(--ink-soft);
+      }
+      footer ul { list-style: none; margin-left: 0; }
+      footer li { margin-bottom: 4px; }
+
+      .mascot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+
+      @media (max-width: 720px) {
+        body { padding: 32px 16px 64px; }
+        .doc-title { font-size: 26px; }
+        .cards, .cards.cols-2, .cards.cols-4 { grid-template-columns: 1fr; }
+        .doc-meta { flex-wrap: wrap; gap: 12px; }
+      }
+    
+
+      .source-note {
+        border-top: 1px solid var(--rule);
+        color: var(--ink-faint);
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        margin-top: 56px;
+        padding-top: 14px;
+        text-transform: uppercase;
+      }
+</style>
+  </head>
+  <body>
+    <article class="doc">
+      <header class="doc-header">
+        <div class="doc-eyebrow"><span class="mascot"></span>Nodejs · Migrated Article</div>
+        <h1 class="doc-title">commonjs与esm</h1>
+        <p class="doc-subtitle">前端模块化简述，很早之前就知道是啥，这里总结下</p>
+        <div class="doc-meta">
+          <span>DATE · 2023-01-01</span>
+          <span>TAGS · Nodejs, Backend, Server, Frontend, Module, Pack</span>
+          <span>SOURCE · old blog</span>
+        </div>
+      </header>
+
+      <div class="tldr">
+        <div class="tldr-label">TL;DR</div>
+        前端模块化简述，很早之前就知道是啥，这里总结下
+      </div>
+
+      <section>
+<h2><span class="num">01</span>模块化</h2>
+<pre><code data-language="html">&lt;body&gt;
+  &lt;script src=&quot;./index.js&quot;&gt;&lt;/script&gt;
+  &lt;script src=&quot;./home.js&quot;&gt;&lt;/script&gt;
+  &lt;script src=&quot;./list.js&quot;&gt;&lt;/script&gt;
+&lt;/body&gt;</code></pre>
+<p>如上所示 3个script 定义的变量相互污染   并且还要看加载的顺序</p>
+<p>为了解决<strong>全局污染</strong>和<strong>依赖管理</strong>混乱问题 模块化被提出</p>
+</section>
+<section>
+<h2><span class="num">02</span>commonjs</h2>
+<p>每个js相当于一个模块</p>
+<p>实际上在编译的过程对每个js包了一层</p>
+<pre><code data-language="javascript">(function(exports,require,module,__filename,__dirname){
+   const sayName = require(&#39;./hello.js&#39;)
+    module.exports = function say(){
+        return {
+            name:sayName(),
+            author:&#39;我不是外星人&#39;
+        }
+    }
+})</code></pre>
+<p>因此你可以在js中使用 exports,require,module,__filename,__dirname 这些没有定义的变量</p>
+<p>编译显然是打包去做的，如果你使用node node环境自带这个功能，可以省去编译。</p>
+<h3>require 文件加载流程</h3>
+<pre><code data-language="javascript">const fs =      require(&#39;fs&#39;)      // ①核心模块
+const sayName = require(&#39;./hello.js&#39;)  //② 文件模块
+const crypto =  require(&#39;crypto-js&#39;)   // ③第三方自定义模块</code></pre>
+<p>当 require 方法执行的时候，接收的唯一参数作为一个<strong>标识符</strong> ，Commonjs 下对不同的标识符，处理流程不同，但是<strong>目的相同，都是找到对应的模块</strong>。</p>
+<h4>require 加载标识符原则</h4>
+<p>首先我们看一下 <code>nodejs</code> 中对标识符的处理原则。</p>
+<ul>
+  <li>首先像 fs ，http ，path 等标识符，会被作为 nodejs 的<strong>核心模块</strong>。</li>
+  <li><code>./</code> 和 <code>../</code> 作为相对路径的<strong>文件模块</strong>， <code>/</code> 作为绝对路径的<strong>文件模块</strong>。</li>
+  <li>非路径形式也非核心模块的模块，将作为<strong>自定义模块</strong>。</li>
+</ul>
+<p><strong>核心模块的处理：</strong></p>
+<p>核心模块的优先级仅次于缓存加载，在 <code>Node</code> 源码编译中，已被编译成二进制代码，所以加载核心模块，加载过程中速度最快。</p>
+<p><strong>路径形式的文件模块处理：</strong></p>
+<p>已 <code>./</code> ，<code>../</code> 和 <code>/</code> 开始的标识符，会被当作文件模块处理。<code>require()</code> 方法会将路径转换成真实路径，并以真实路径作为索引，将编译后的结果缓存起来，第二次加载的时候会更快。至于<strong>怎么缓存</strong>的？我们稍后会讲到。</p>
+<p><strong>自定义模块处理：</strong> 自定义模块，一般指的是非核心的模块，它可能是一个文件或者一个包，它的查找会遵循以下原则：</p>
+<ul>
+  <li>在当前目录下的 <code>node_modules</code> 目录查找。</li>
+  <li>如果没有，在父级目录的 <code>node_modules</code> 查找，如果没有在父级目录的父级目录的 <code>node_modules</code> 中查找。</li>
+  <li>沿着路径向上递归，直到根目录下的 <code>node_modules</code> 目录。</li>
+  <li>在查找过程中，会找 <code>package.json</code> 下 main 属性指向的文件，如果没有  <code>package.json</code> ，在 node 环境下会以此查找 <code>index.js</code> ，<code>index.json</code> ，<code>index.node</code>。</li>
+</ul>
+<h3>require 模块引入与处理</h3>
+<p>CommonJS 模块同步加载并执行模块文件，CommonJS 模块在执行阶段分析模块依赖，采用<strong>深度优先遍历</strong>（depth-first traversal），执行顺序是父 -&gt; 子 -&gt; 父；</p>
+<h4>require 加载原理</h4>
+<p><strong><code>module</code></strong> ：在 Node 中每一个 js 文件都是一个 module ，module 上保存了 exports 等信息之外，还有一个 <strong><code>loaded</code></strong> 表示该模块是否被加载。</p>
+<ul>
+  <li>为 <code>false</code> 表示还没有加载；</li>
+  <li>为 <code>true</code> 表示已经加载</li>
+</ul>
+<p><strong><code>Module</code></strong> ：以 nodejs 为例，整个系统运行之后，会用 <code>Module</code> 缓存每一个模块加载的信息。</p>
+<pre><code data-language="javascript"> // id 为路径标识符
+function require(id) {
+   /* 查找  Module 上有没有已经加载的 js  对象*/
+   const  cachedModule = Module._cache[id]
+   
+   /* 如果已经加载了那么直接取走缓存的 exports 对象  */
+  if(cachedModule){
+    return cachedModule.exports
+  }
+ 
+  /* 创建当前模块的 module  */
+  const module = { exports: {} ,loaded: false , ...}
+
+  /* 将 module 缓存到  Module 的缓存属性中，路径标识符作为 id */  
+  Module._cache[id] = module
+  /* 加载文件 */
+  runInThisContext(wrapper(&#39;module.exports = &quot;123&quot;&#39;))(module.exports, require, module, __filename, __dirname)
+  /* 加载完成 *//
+  module.loaded = true 
+  /* 返回值 */
+  return module.exports
+}</code></pre>
+<p>从上面我们总结出一次 <code>require</code> 大致流程是这样的；</p>
+<ul>
+  <li>require 会接收一个参数——文件标识符，然后分析定位文件，分析过程我们上述已经讲到了，加下来会从 Module 上查找有没有缓存，如果有缓存，那么直接返回缓存的内容。</li>
+  <li>如果没有缓存，会创建一个 module 对象，缓存到 Module 上，然后执行文件，加载完文件，将 loaded 属性设置为 true ，然后返回 module.exports 对象。借此完成模块加载流程。</li>
+  <li>模块导出就是 return 这个变量的其实跟 a = b 赋值一样， 基本类型导出的是值， 引用类型导出的是引用地址。</li>
+  <li>exports 和 module.exports 持有相同引用，因为最后导出的是 module.exports， 所以对 exports 进行赋值会导致 exports 操作的不再是 module.exports 的引用。</li>
+</ul>
+<h4>require 避免重复加载</h4>
+<p>从上面我们可以直接得出，require 如何避免重复加载的，首先加载之后的文件的 <code>module</code> 会被缓存到 <code>Module</code> 上，比如一个模块已经 require 引入了 a 模块，如果另外一个模块再次引用 a ，那么会直接读取缓存值 module ，所以无需再次执行模块。</p>
+<h4>require 避免循环引用</h4>
+<p>如上图源码所示 先加入缓存后执行。有缓存时就会直接取对象。不会再执行内容了。</p>
+</section>
+<section>
+<h2><span class="num">03</span>Es Module(ESM)</h2>
+<p>Es Module 的产生有很多优势，比如:</p>
+<ul>
+  <li>借助 <code>Es Module</code> 的静态导入导出的优势，实现了 <code>tree shaking</code>。</li>
+  <li><code>Es Module</code> 还可以 <code>import()</code> 懒加载方式实现代码分割。</li>
+</ul>
+<h3>导出 export 和导入 import</h3>
+<p>所有通过 export 导出的属性，在 import 中可以通过结构的方式，解构出来。</p>
+<pre><code data-language="javascript">const name = &#39;《React进阶实践指南》&#39; 
+const author = &#39;我不是外星人&#39;
+export { name, author }
+export const say = function (){
+    console.log(&#39;hello , world&#39;)
+}</code></pre>
+<pre><code data-language="js">import { name , author , say } from &#39;./a.js&#39;</code></pre>
+<p><strong>默认导出 export default</strong></p>
+<pre><code data-language="javascript">const name = &#39;《React进阶实践指南》&#39;
+const author = &#39;我不是外星人&#39;
+const say = function (){
+    console.log(&#39;hello , world&#39;)
+}
+export default {
+    name,
+    author,
+    say
+} </code></pre>
+<p><strong>import</strong> mes <strong>from</strong> &#39;./a.js&#39; 自定义导出模块的名字</p>
+<p><strong>混合导入｜导出</strong></p>
+<pre><code data-language="javascript">export const name = &#39;《React进阶实践指南》&#39;
+export const author = &#39;我不是外星人&#39;
+
+export default  function say (){
+    console.log(&#39;hello , world&#39;)
+}</code></pre>
+<pre><code data-language="javascript">import theSay , { name, author as  bookAuthor } from &#39;./a.js&#39;
+console.log(
+    theSay,     // ƒ say() {console.log(&#39;hello , world&#39;) }
+    name,       // &quot;《React进阶实践指南》&quot;
+    bookAuthor  // &quot;我不是外星人&quot;
+)
+// 或者
+
+import theSay, * as mes from &#39;./a&#39;
+console.log(
+    theSay, // ƒ say() { console.log(&#39;hello , world&#39;) }
+    mes // { name:&#39;《React进阶实践指南》&#39; , author: &quot;我不是外星人&quot; ，default:  ƒ say() { console.log(&#39;hello , world&#39;) } }
+)</code></pre>
+<p><strong>重属名导入</strong></p>
+<p>as</p>
+<p><strong>重定向导出</strong></p>
+<p>可以把当前模块作为一个中转站，一方面引入 module 内的属性，然后把属性再给导出去。</p>
+<pre><code data-language="javascript">export * from &#39;module&#39; // 第一种方式
+export { name, author, ..., say } from &#39;module&#39; // 第二种方式
+export {   name as bookName ,  author as bookAuthor , ..., say } from &#39;module&#39; //第三种方式</code></pre>
+<p>第一种方式：重定向导出 module 中的所有导出属性， 但是不包括 <code>module</code> 内的 <code>default</code> 属性。</p>
+<p>第二种方式：从 module 中导入 name ，author ，say 再以相同的属性名，导出。</p>
+<p>第三种方式：从 module 中导入 name ，重属名为 bookName 导出，从 module 中导入 author ，重属名为 bookAuthor 导出，正常导出 say</p>
+<p><strong>无需导入模块，只运行模块</strong></p>
+<p><strong>import</strong> &#39;module&#39;</p>
+<ul>
+  <li>执行 module 不导出值 多次调用 <code>module</code> 只运行一次。</li>
+</ul>
+<p><strong>动态导入</strong></p>
+<p><strong>const</strong> promise = <strong>import</strong>(&#39;module&#39;)</p>
+<ul>
+  <li><code>import(&#39;module&#39;)</code>，动态导入返回一个 <code>Promise</code>。为了支持这种方式，需要在 webpack 中做相应的配置处理。</li>
+</ul>
+<h3>ES6 module 特性</h3>
+<h4>1 静态语法</h4>
+<p>ES6 module 的引入和导出是静态的，<code>import</code> 会自动提升到代码的顶层 ，<code>import</code> , <code>export</code> 不能放在块级作用域或条件语句中。</p>
+<p>这种静态语法，在编译过程中确定了导入和导出的关系，所以更方便去查找依赖，更方便去 <code>tree shaking</code> (摇树) ， 可以使用 lint 工具对模块依赖进行检查，可以对导入导出加上类型信息进行静态的类型检查。</p>
+<h4>2 执行特性</h4>
+<p>ES6 module 和 Common.js 一样，对于相同的 js 文件，会保存静态属性。</p>
+<p>但是与 Common.js 不同的是 ，<code>CommonJS</code>模块同步加载并执行模块文件，ES6 模块提前加载并执行模块文件，ES6 模块在预处理阶段分析模块依赖，在执行阶段执行模块，两个阶段都采用深度优先遍历，执行顺序是子 -&gt; 父。</p>
+<h4>3 导出绑定</h4>
+<p><strong>不能修改import导入的属性</strong></p>
+<p>接下来对 import 属性作出总结：</p>
+<ul>
+  <li>使用 import 被导入的模块运行在严格模式下。</li>
+  <li>使用 import 被导入的变量是只读的，可以理解默认为 const 装饰，无法被赋值</li>
+  <li>使用 import 被导入的变量是与原变量绑定/引用的，可以理解为 import 导入的变量无论是否为基本类型都是引用传递。</li>
+</ul>
+<h3>import() 动态引入</h3>
+<p><code>import()</code> 返回一个 <code>Promise</code> 对象， 返回的 <code>Promise</code> 的 then 成功回调中，可以获取模块的加载成功信息。</p>
+<h3>tree shaking 实现</h3>
+<p>Tree Shaking 在 Webpack 中的实现，是用来尽可能的删除没有被使用过的代码，一些被 import 了但其实没有被使用的代码</p>
+</section>
+<section>
+<h2><span class="num">04</span>五 Commonjs 和 Es Module 总结</h2>
+<p>接下来贯穿全文，讲一下 <code>Commonjs</code> 和 <code>Es Module</code> 的特性。</p>
+<h3>Commonjs 总结</h3>
+<p><code>Commonjs</code> 的特性如下：</p>
+<ul>
+  <li>CommonJS 模块由 JS 运行时实现。</li>
+  <li>CommonJs 是单个值导出，本质上导出的就是 exports 属性。</li>
+  <li>CommonJS 是可以动态加载的，对每一个加载都存在缓存，可以有效的解决循环引用问题。</li>
+  <li>CommonJS 模块同步加载并执行模块文件。</li>
+</ul>
+<h3>es module 总结</h3>
+<p><code>Es module</code> 的特性如下：</p>
+<ul>
+  <li>ES6 Module 静态的，不能放在块级作用域内，代码发生在编译时。</li>
+  <li>ES6 Module 的值是动态绑定的，可以通过导出方法修改，可以直接访问修改结果。</li>
+  <li>ES6 Module 可以导出多个属性和方法，可以单个导入导出，混合导入导出。</li>
+  <li>ES6 模块提前加载并执行模块文件，</li>
+  <li>ES6 Module 导入模块在严格模式下。</li>
+  <li>ES6 Module 的特性可以很容易实现 Tree Shaking 和 Code Splitting。</li>
+</ul>
+</section>
+
+      <div class="source-note">Migrated from data/blog/202301/commonjs与esm.md</div>
+    </article>
+  </body>
+</html>

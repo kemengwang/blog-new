@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>child_process</title>
+    <meta name="description" content="讲解Nodejs中子进程相关内容，这是比较细致的讲解，有具体方法调用" />
+    <style>
+      :root {
+        --paper: #f7f7f5;
+        --paper-edge: #efefea;
+        --ink: #1a1a1a;
+        --ink-soft: #4a4a4a;
+        --ink-faint: #7a7a7a;
+        --rule: #d8d8d2;
+        --rule-soft: #e8e8e2;
+        --accent: #6f9bb8;
+        --accent-soft: #d9e6f0;
+        --accent-faint: #eef4f8;
+        --warn: #b88a4a;
+        --warn-soft: #f5ecdc;
+        --danger: #a05050;
+        --code-bg: #ececea;
+
+        /* Semantic palette for three-layer cards. Rename freely
+           (e.g. --layer-a / --layer-b / --layer-c) when the three
+           layers in the doc are not brain/hands/session. */
+        --brain: #6f9bb8;
+        --brain-bg: #eef4f8;
+        --hands: #b88a4a;
+        --hands-bg: #f5ecdc;
+        --session: #6b7560;
+        --session-bg: #ecede5;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { font-size: 16px; }
+
+      /* Font stacks include both English serifs/monospace and CJK
+         fallbacks so the same template renders cleanly for English
+         or Chinese source content. */
+      body {
+        font-family:
+          ui-serif, "Charter", "Iowan Old Style", "Source Serif Pro", Georgia,
+          "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+        background: var(--paper);
+        color: var(--ink);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        padding: 64px 24px 96px;
+      }
+
+      .doc { max-width: 840px; margin: 0 auto; }
+
+      /* ─── Header ─── */
+      .doc-header {
+        border-bottom: 1px solid var(--rule);
+        padding-bottom: 28px;
+        margin-bottom: 48px;
+      }
+      .doc-eyebrow {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 14px;
+      }
+      .doc-title {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 34px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+      }
+      .doc-subtitle {
+        font-size: 16px;
+        color: var(--ink-soft);
+        margin-top: 10px;
+        font-style: italic;
+      }
+      .doc-meta {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        color: var(--ink-faint);
+        margin-top: 18px;
+        display: flex;
+        gap: 24px;
+      }
+
+      /* ─── TL;DR ─── */
+      .tldr {
+        background: var(--accent-faint);
+        border-left: 2px solid var(--accent);
+        padding: 20px 24px;
+        margin-bottom: 56px;
+        font-size: 15px;
+      }
+      .tldr-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      /* ─── Sections ─── */
+      section { margin-bottom: 56px; }
+      h2 {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.005em;
+        margin-bottom: 18px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--rule);
+      }
+      h2 .num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-weight: 500;
+        margin-right: 14px;
+        letter-spacing: 0.05em;
+      }
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 28px 0 10px;
+      }
+      h4 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 22px 0 8px;
+      }
+      p { margin-bottom: 14px; }
+      p + p { margin-top: -2px; }
+      a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+      a:hover { border-bottom-color: var(--accent); }
+      code {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+        background: var(--code-bg);
+        padding: 1px 5px;
+        border-radius: 2px;
+      }
+      pre {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12.5px;
+        line-height: 1.55;
+        background: var(--code-bg);
+        padding: 14px 18px;
+        margin: 14px 0 18px;
+        overflow-x: auto;
+        border-left: 2px solid var(--rule);
+      }
+      pre code { background: transparent; padding: 0; }
+      ul, ol { margin: 8px 0 16px 22px; }
+      li { margin-bottom: 6px; }
+      strong { font-weight: 600; }
+      em { color: var(--ink-soft); }
+      blockquote {
+        border-left: 2px solid var(--rule);
+        padding: 4px 0 4px 18px;
+        margin: 14px 0 18px;
+        color: var(--ink-soft);
+        font-style: italic;
+      }
+
+      /* ─── Tables ─── */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 14px 0 18px;
+        font-size: 14px;
+      }
+      th, td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--rule-soft);
+        vertical-align: top;
+      }
+      th {
+        font-weight: 600;
+        font-family:
+          ui-sans-serif, system-ui,
+          "PingFang SC", "Hiragino Sans GB", sans-serif;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--ink-faint);
+        border-bottom: 1px solid var(--rule);
+      }
+      tbody tr:hover { background: rgba(0,0,0,0.015); }
+      td.num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+      }
+      td.accent { color: var(--accent); font-weight: 500; }
+
+      /* ─── Callouts ─── */
+      .callout {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 18px;
+        margin: 16px 0 20px;
+      }
+      .callout.warn {
+        border-color: #e6d4a8;
+        background: var(--warn-soft);
+      }
+      .callout.cite {
+        border-left: 2px solid var(--accent);
+        border-top: none; border-right: none; border-bottom: none;
+        background: var(--accent-faint);
+        padding-left: 22px;
+        font-style: italic;
+      }
+      .callout-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .callout.warn .callout-label { color: var(--warn); }
+      .cite-source {
+        font-style: normal;
+        font-size: 12px;
+        color: var(--ink-faint);
+        margin-top: 10px;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+      }
+
+      /* ─── Figure / Diagram ─── */
+      figure {
+        margin: 28px 0 32px;
+        border: 1px solid var(--rule);
+        background: #fff;
+      }
+      figure svg { display: block; width: 100%; height: auto; }
+      figure img { display: block; width: 100%; height: auto; }
+      figcaption {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        padding: 10px 16px;
+        border-top: 1px solid var(--rule-soft);
+        background: var(--paper-edge);
+      }
+      figcaption .fig-num {
+        color: var(--accent);
+        margin-right: 10px;
+        font-weight: 600;
+      }
+
+      /* ─── N-column concept cards ─── */
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin: 20px 0 18px;
+      }
+      .cards.cols-2 { grid-template-columns: repeat(2, 1fr); }
+      .cards.cols-4 { grid-template-columns: repeat(4, 1fr); }
+      .card {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 16px 14px;
+      }
+      .card-icon {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .card-name {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 17px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .card-where {
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-style: italic;
+        margin-bottom: 10px;
+      }
+      .card-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+
+      /* tone variants for cards */
+      .card.tone-a .card-icon { color: var(--brain); }
+      .card.tone-b .card-icon { color: var(--hands); }
+      .card.tone-c .card-icon { color: var(--session); }
+
+      /* ─── Buttons / Inputs (for interactive sections) ─── */
+      .btn {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 8px 14px;
+        background: #fff;
+        color: var(--ink);
+        border: 1px solid var(--rule);
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn:hover { background: var(--paper-edge); }
+      .btn.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .btn.primary:hover { background: #5a87a4; }
+
+      input[type="text"], input[type="email"], textarea, select {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 14px;
+        padding: 8px 12px;
+        background: #fff;
+        border: 1px solid var(--rule);
+        color: var(--ink);
+        width: 100%;
+        margin-bottom: 10px;
+      }
+      input:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      /* ─── Footer ─── */
+      footer {
+        margin-top: 80px;
+        padding-top: 24px;
+        border-top: 1px solid var(--rule);
+        font-size: 12px;
+        color: var(--ink-faint);
+      }
+      footer h4 {
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        margin-bottom: 10px;
+        color: var(--ink-soft);
+      }
+      footer ul { list-style: none; margin-left: 0; }
+      footer li { margin-bottom: 4px; }
+
+      .mascot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+
+      @media (max-width: 720px) {
+        body { padding: 32px 16px 64px; }
+        .doc-title { font-size: 26px; }
+        .cards, .cards.cols-2, .cards.cols-4 { grid-template-columns: 1fr; }
+        .doc-meta { flex-wrap: wrap; gap: 12px; }
+      }
+    
+
+      .source-note {
+        border-top: 1px solid var(--rule);
+        color: var(--ink-faint);
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        margin-top: 56px;
+        padding-top: 14px;
+        text-transform: uppercase;
+      }
+</style>
+  </head>
+  <body>
+    <article class="doc">
+      <header class="doc-header">
+        <div class="doc-eyebrow"><span class="mascot"></span>Nodejs · Migrated Article</div>
+        <h1 class="doc-title">child_process</h1>
+        <p class="doc-subtitle">讲解Nodejs中子进程相关内容，这是比较细致的讲解，有具体方法调用</p>
+        <div class="doc-meta">
+          <span>DATE · 2024-01-02</span>
+          <span>TAGS · Nodejs, Frontend, Server</span>
+          <span>SOURCE · old blog</span>
+        </div>
+      </header>
+
+      <div class="tldr">
+        <div class="tldr-label">TL;DR</div>
+        讲解Nodejs中子进程相关内容，这是比较细致的讲解，有具体方法调用
+      </div>
+
+      <section>
+<h2><span class="num">01</span>子进程</h2>
+<p><code>node:child_process</code> 模块 提供相关能里</p>
+<p>此功能主要由 <a href="https://nodejs.cn/api/child_process.html#child_processspawncommand-args-options"><code>child_process.spawn()</code></a> 函数提供：</p>
+<pre><code data-language="js">const { spawn } = require(&#39;node:child_process&#39;);
+const ls = spawn(&#39;ls&#39;, [&#39;-lh&#39;, &#39;/usr&#39;]);
+
+ls.stdout.on(&#39;data&#39;, (data) =&gt; {
+  console.log(`stdout: ${data}`);
+});
+
+ls.stderr.on(&#39;data&#39;, (data) =&gt; {
+  console.error(`stderr: ${data}`);
+});
+
+ls.on(&#39;close&#39;, (code) =&gt; {
+  console.log(`child process exited with code ${code}`);
+});</code></pre>
+<p>默认情况下，会在父 Node.js 进程和衍生的子进程之间建立 <code>stdin</code>、<code>stdout</code> 和 <code>stderr</code> 的管道。这些管道的容量有限（且特定于平台）。如果子进程在没有捕获输出的情况下写入标准输出超过该限制，则子进程会阻塞等待管道缓冲区接受更多数据。这与 shell 中管道的行为相同。如果不消费输出，则使用 <code>{ stdio: &#39;ignore&#39; }</code> 选项。</p>
+<p><a href="https://nodejs.cn/api/child_process.html#child_processspawncommand-args-options"><code>child_process.spawn()</code></a> 方法异步衍生子进程，不会阻塞 Node.js 事件循环。<a href="https://nodejs.cn/api/child_process.html#child_processspawnsynccommand-args-options"><code>child_process.spawnSync()</code></a> 函数以同步方式提供等效的功能，其会阻塞事件循环，直到衍生的进程退出或终止。</p>
+<p>为了方便 多了些方法 但是都是从上面两个衍生出的</p>
+<ul>
+  <li><a href="https://nodejs.cn/api/child_process.html#child_processexeccommand-options-callback"><code>child_process.exec()</code></a>：衍生 shell 并在该 shell 中运行命令，完成后将 <code>stdout</code> 和 <code>stderr</code> 传给回调函数。</li>
+  <li><a href="https://nodejs.cn/api/child_process.html#child_processexecfilefile-args-options-callback"><code>child_process.execFile()</code></a>：与 <a href="https://nodejs.cn/api/child_process.html#child_processexeccommand-options-callback"><code>child_process.exec()</code></a> 类似，不同之处在于，默认情况下，它直接衍生命令，而不先衍生 shell。</li>
+  <li><a href="https://nodejs.cn/api/child_process.html#child_processforkmodulepath-args-options"><code>child_process.fork()</code></a>：衍生新的 Node.js 进程并使用建立的 IPC 通信通道（其允许在父子进程之间发送消息）调用指定的模块。</li>
+  <li><a href="https://nodejs.cn/api/child_process.html#child_processexecsynccommand-options"><code>child_process.execSync()</code></a>：<a href="https://nodejs.cn/api/child_process.html#child_processexeccommand-options-callback"><code>child_process.exec()</code></a> 的同步版本，其将阻塞 Node.js 事件循环。</li>
+  <li><a href="https://nodejs.cn/api/child_process.html#child_processexecfilesyncfile-args-options"><code>child_process.execFileSync()</code></a>：<a href="https://nodejs.cn/api/child_process.html#child_processexecfilefile-args-options-callback"><code>child_process.execFile()</code></a> 的同步版本，其将阻塞 Node.js 事件循环。</li>
+</ul>
+</section>
+<section>
+<h2><span class="num">02</span>异步进程创建</h2>
+<p><a href="https://nodejs.cn/api/child_process.html#child_processspawncommand-args-options"><code>child_process.spawn()</code></a>、<a href="https://nodejs.cn/api/child_process.html#child_processforkmodulepath-args-options"><code>child_process.fork()</code></a>、<a href="https://nodejs.cn/api/child_process.html#child_processexeccommand-options-callback"><code>child_process.exec()</code></a> 和 <a href="https://nodejs.cn/api/child_process.html#child_processexecfilefile-args-options-callback"><code>child_process.execFile()</code></a> 方法都遵循其他 Node.js API 典型的惯用异步编程模式。</p>
+<p>每个方法都返回 <a href="https://nodejs.cn/api/child_process.html#class-childprocess"><code>ChildProcess</code></a> 实例。这些对象实现了 Node.js <a href="https://nodejs.cn/api/events.html#class-eventemitter"><code>EventEmitter</code></a> API，允许父进程注册在子进程的生命周期中发生某些事件时调用的监听器函数。</p>
+<p><a href="https://nodejs.cn/api/child_process.html#child_processexeccommand-options-callback"><code>child_process.exec()</code></a> 和 <a href="https://nodejs.cn/api/child_process.html#child_processexecfilefile-args-options-callback"><code>child_process.execFile()</code></a> 方法还允许指定可选的 <code>callback</code> 函数，其在子进程终止时调用。</p>
+</section>
+<section>
+<h2><span class="num">03</span>在 Windows 上生成 <code>.bat</code> 和 <code>.cmd</code> 文件</h2>
+<p>在 Windows 上运行时，<code>.bat</code> 和 <code>.cmd</code> 文件可以使用具有 <code>shell</code> 选项集的 <a href="https://nodejs.cn/api/child_process.html#child_processspawncommand-args-options"><code>child_process.spawn()</code></a>、使用 <a href="https://nodejs.cn/api/child_process.html#child_processexeccommand-options-callback"><code>child_process.exec()</code></a>、 或通过衍生 <code>cmd.exe</code> 并将 <code>.bat</code> 或 <code>.cmd</code> 文件作为参数传入(这也是 <code>shell</code> 选项和 <a href="https://nodejs.cn/api/child_process.html#child_processexeccommand-options-callback"><code>child_process.exec()</code></a> 所做的)</p>
+<p><a href="https://nodejs.cn/api/child_process.html#child_processexeccommand-options-callback"><code>child_process.exec()</code></a> 和 <a href="https://nodejs.cn/api/child_process.html#child_processexecfilefile-args-options-callback"><code>child_process.execFile()</code></a> 功能一致 只是exec会衍生 shell</p>
+<p>execfile 不衍生 在Unix、Linux、macOS会更高效</p>
+<p>window</p>
+<pre><code data-language="js">// On Windows Only...
+const { spawn } = require(&#39;node:child_process&#39;);
+const bat = spawn(&#39;cmd.exe&#39;, [&#39;/c&#39;, &#39;my.bat&#39;]);
+
+bat.stdout.on(&#39;data&#39;, (data) =&gt; {
+  console.log(data.toString());
+});
+
+bat.stderr.on(&#39;data&#39;, (data) =&gt; {
+  console.error(data.toString());
+});
+
+bat.on(&#39;exit&#39;, (code) =&gt; {
+  console.log(`Child exited with code ${code}`);
+});</code></pre>
+<pre><code data-language="js">// OR...
+const { exec, spawn } = require(&#39;node:child_process&#39;);
+exec(&#39;my.bat&#39;, (err, stdout, stderr) =&gt; {
+  if (err) {
+    console.error(err);
+    return;
+  }
+  console.log(stdout);
+});
+
+// Script with spaces in the filename: &quot;my script.cmd&quot; 要加引号 如果脚本名字有空格
+const bat = spawn(&#39;&quot;my script.cmd&quot;&#39;, [&#39;a&#39;, &#39;b&#39;], { shell: true });
+// or:
+exec(&#39;&quot;my script.cmd&quot; a b&#39;, (err, stdout, stderr) =&gt; {
+  // ...
+});
+</code></pre>
+</section>
+<section>
+<h2><span class="num">04</span>方法 详细</h2>
+<h4><code>child_process.exec(command[, options][, callback])</code></h4>
+<p>衍生shell执行</p>
+<ul>
+  <li><code>command</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> 要运行的命令，参数以空格分隔。</li>
+</ul>
+<ul>
+  <li><code>options</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></li>
+</ul>
+<ul>
+  <li><code>cwd</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> | <a href="https://nodejs.cn/api/url.html#the-whatwg-url-api">URL</a> 子进程的当前工作目录。默认值：<code>process.cwd()</code>。</li>
+</ul>
+<ul>
+  <li><code>env</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a> 环境变量键值对。默认值：<code>process.env</code>。</li>
+</ul>
+<ul>
+  <li><code>encoding</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> 默认值：<code>&#39;utf8&#39;</code></li>
+</ul>
+<ul>
+  <li><code>shell</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> 用于执行命令的 shell。参见 <a href="https://nodejs.cn/api/child_process.html#shell-requirements">Shell 要求</a> 和 <a href="https://nodejs.cn/api/child_process.html#default-windows-shell">默认 Windows shell</a>。默认值：Unix 上为 <code>&#39;/bin/sh&#39;</code>，Windows 上为 <code>process.env.ComSpec</code>。</li>
+</ul>
+<ul>
+  <li><code>signal</code> <a href="https://nodejs.cn/api/globals.html#class-abortsignal">AbortSignal</a> 允许使用 AbortSignal 中止子进程。</li>
+</ul>
+<ul>
+  <li><code>timeout</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Number_type">number</a> 默认值：<code>0</code></li>
+</ul>
+<ul>
+  <li><code>maxBuffer</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Number_type">number</a> 标准输出或标准错误上允许的最大数据量（以字节为单位）。如果超过，则子进程将终止并截断任何输出。请参阅 <a href="https://nodejs.cn/api/child_process.html#maxbuffer-and-unicode"><code>maxBuffer</code> 和 Unicode</a> 的警告。默认值：<code>1024 * 1024</code>。</li>
+</ul>
+<ul>
+  <li><code>killSignal</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> | <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Number_type">integer</a> 默认值：<code>&#39;SIGTERM&#39;</code></li>
+</ul>
+<ul>
+  <li><code>uid</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Number_type">number</a> 设置进程的用户身份（请参阅 <a href="http://man7.org/linux/man-pages/man2/setuid.2.html"><code>setuid(2)</code></a>）。</li>
+</ul>
+<ul>
+  <li><code>gid</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Number_type">number</a> 设置进程的组标识（请参阅 <a href="http://man7.org/linux/man-pages/man2/setgid.2.html"><code>setgid(2)</code></a>）。</li>
+</ul>
+<ul>
+  <li><code>windowsHide</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Boolean_type">boolean</a> 隐藏通常在 Windows 系统上创建的子进程控制台窗口。默认值：<code>false</code>。</li>
+</ul>
+<ul>
+  <li><code>callback</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function">Function</a> 当进程终止时调用输出。</li>
+</ul>
+<ul>
+  <li><code>error</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a></li>
+</ul>
+<ul>
+  <li><code>stdout</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> | <a href="https://nodejs.cn/api/buffer.html#class-buffer">Buffer</a></li>
+</ul>
+<ul>
+  <li><code>stderr</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> | <a href="https://nodejs.cn/api/buffer.html#class-buffer">Buffer</a></li>
+</ul>
+<ul>
+  <li>返回：<a href="https://nodejs.cn/api/child_process.html#class-childprocess">ChildProcess</a></li>
+</ul>
+<p>如果提供了 <code>callback</code> 函数，则使用参数 <code>(error, stdout, stderr)</code> 调用它。成功后，<code>error</code> 将是 <code>null</code>。出错时，<code>error</code> 将是 <a href="https://nodejs.cn/api/errors.html#class-error"><code>Error</code></a> 的实例。<code>error.code</code> 属性将是进程的退出码。按照惯例，除 <code>0</code> 之外的任何退出码都表示错误。<code>error.signal</code> 将是终止进程的信号。</p>
+<p><code>encoding</code> 是 <code>&#39;buffer&#39;</code> 或无法识别的字符编码，则 <code>Buffer</code> 对象将被传给回调(stdout, stderr)</p>
+<pre><code data-language="js">const { exec } = require(&#39;node:child_process&#39;);
+exec(&#39;cat *.js missing_file | wc -l&#39;, (error, stdout, stderr) =&gt; {
+  if (error) {
+    console.error(`exec error: ${error}`);
+    return;
+  }
+  console.log(`stdout: ${stdout}`);
+  console.error(`stderr: ${stderr}`);
+});</code></pre>
+<p>如果 <code>timeout</code> 大于 <code>0</code>，则如果子进程运行时间超过 <code>timeout</code> 毫秒，父进程将发送由 <code>killSignal</code> 属性（默认为 <code>&#39;SIGTERM&#39;</code>）标识的信号。</p>
+<p><a href="https://nodejs.cn/api/util.html#utilpromisifyoriginal"><code>util.promisify()</code></a>  使用进程</p>
+<pre><code data-language="js">const util = require(&#39;node:util&#39;);
+const exec = util.promisify(require(&#39;node:child_process&#39;).exec);
+
+async function lsExample() {
+  const { stdout, stderr } = await exec(&#39;ls&#39;);
+  // exec(&#39;ls&#39;) promise上有个child 为`ChildProcess` 实例
+  console.log(&#39;stdout:&#39;, stdout);
+  console.error(&#39;stderr:&#39;, stderr);
+}
+lsExample();</code></pre>
+<p><code>signal</code> 选项: 相应的 <code>AbortController</code> 上调用 <code>.abort()</code> 与在子进程上调用 <code>.kill()</code> 类似，只是传给回调的错误将是 <code>AbortError</code>：</p>
+<pre><code data-language="js"> const { exec } = require(&#39;node:child_process&#39;);
+const controller = new AbortController();
+const { signal } = controller;
+const child = exec(&#39;grep ssh&#39;, { signal }, (error) =&gt; {
+  console.error(error); // an AbortError
+});
+controller.abort();</code></pre>
+<h4><code>child_process.execFile(file[, args][, options][, callback])</code></h4>
+<p><code>child_process.execFile()</code> 函数与 <a href="https://nodejs.cn/api/child_process.html#child_processexeccommand-options-callback"><code>child_process.exec()</code></a> 类似，不同之处在于它默认不衍生 shell。而是，指定的可执行文件 <code>file</code> 直接作为新进程衍生，使其比 <a href="https://nodejs.cn/api/child_process.html#child_processexeccommand-options-callback"><code>child_process.exec()</code></a> 略有效率。</p>
+<ul>
+  <li><code>file</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> 要运行的可执行文件的名称或路径。</li>
+</ul>
+<ul>
+  <li><code>args</code> [string[]](https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type) 字符串参数列表。</li>
+</ul>
+<ul>
+  <li><code>options</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></li>
+</ul>
+<ul>
+  <li><code>cwd</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> | <a href="https://nodejs.cn/api/url.html#the-whatwg-url-api">URL</a> 子进程的当前工作目录。</li>
+</ul>
+<ul>
+  <li><code>env</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a> 环境变量键值对。默认值：<code>process.env</code>。</li>
+</ul>
+<ul>
+  <li><code>encoding</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> 默认值：<code>&#39;utf8&#39;</code></li>
+</ul>
+<ul>
+  <li><code>timeout</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Number_type">number</a> 默认值：<code>0</code></li>
+</ul>
+<ul>
+  <li><code>maxBuffer</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Number_type">number</a> 标准输出或标准错误上允许的最大数据量（以字节为单位）。如果超过，则子进程将终止并截断任何输出。请参阅 <a href="https://nodejs.cn/api/child_process.html#maxbuffer-and-unicode"><code>maxBuffer</code> 和 Unicode</a> 的警告。默认值：<code>1024 * 1024</code>。</li>
+</ul>
+<ul>
+  <li><code>killSignal</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> | <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Number_type">integer</a> 默认值：<code>&#39;SIGTERM&#39;</code></li>
+</ul>
+<ul>
+  <li><code>uid</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Number_type">number</a> 设置进程的用户身份（请参阅 <a href="http://man7.org/linux/man-pages/man2/setuid.2.html"><code>setuid(2)</code></a>）。</li>
+</ul>
+<ul>
+  <li><code>gid</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Number_type">number</a> 设置进程的组标识（请参阅 <a href="http://man7.org/linux/man-pages/man2/setgid.2.html"><code>setgid(2)</code></a>）。</li>
+</ul>
+<ul>
+  <li><code>windowsHide</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Boolean_type">boolean</a> 隐藏通常在 Windows 系统上创建的子进程控制台窗口。默认值：<code>false</code>。</li>
+</ul>
+<ul>
+  <li><code>windowsVerbatimArguments</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Boolean_type">boolean</a> 在 Windows 上不为参数加上引号或转义。在 Unix 上被忽略。默认值：<code>false</code>。</li>
+</ul>
+<ul>
+  <li><code>shell</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Boolean_type">boolean</a> | <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> 如果是 <code>true</code>，则在 shell 内运行 <code>command</code>。在 Unix 上使用 <code>&#39;/bin/sh&#39;</code>，在 Windows 上使用 <code>process.env.ComSpec</code>。可以将不同的 shell 指定为字符串。参见 <a href="https://nodejs.cn/api/child_process.html#shell-requirements">Shell 要求</a> 和 <a href="https://nodejs.cn/api/child_process.html#default-windows-shell">默认 Windows shell</a>。默认值：<code>false</code>（无壳）。</li>
+</ul>
+<ul>
+  <li><code>signal</code> <a href="https://nodejs.cn/api/globals.html#class-abortsignal">AbortSignal</a> 允许使用 AbortSignal 中止子进程。</li>
+</ul>
+<ul>
+  <li><code>callback</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function">Function</a> 进程终止时使用输出调用。</li>
+</ul>
+<ul>
+  <li><code>error</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a></li>
+</ul>
+<ul>
+  <li><code>stdout</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> | <a href="https://nodejs.cn/api/buffer.html#class-buffer">Buffer</a></li>
+</ul>
+<ul>
+  <li><code>stderr</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> | <a href="https://nodejs.cn/api/buffer.html#class-buffer">Buffer</a></li>
+</ul>
+<ul>
+  <li>返回：<a href="https://nodejs.cn/api/child_process.html#class-childprocess">ChildProcess</a></li>
+</ul>
+<pre><code data-language="js">const { execFile } = require(&#39;node:child_process&#39;);
+const child = execFile(&#39;node&#39;, [&#39;--version&#39;], (error, stdout, stderr) =&gt; {
+  if (error) {
+    throw error;
+  }
+  console.log(stdout);
+});</code></pre>
+<p><code>stdout</code> 和 <code>stderr</code>、  <a href="https://nodejs.cn/api/util.html#utilpromisifyoriginal"><code>util.promisify()</code></a>  、signal、AbortController同上方法使用</p>
+<p>可以设定shell为true开启衍生</p>
+<h4><code>child_process.fork(modulePath[, args][, options])</code></h4>
+<p><code>child_process.fork()</code> 方法是 <a href="https://nodejs.cn/api/child_process.html#child_processspawncommand-args-options"><code>child_process.spawn()</code></a> 的特例，专门用于衍生新的 Node.js 进程 独立于父进程 每个进程都有自己的内存，具有自己的 V8 实例</p>
+<ul>
+  <li><code>modulePath</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> | <a href="https://nodejs.cn/api/url.html#the-whatwg-url-api">URL</a> 要在子进程中运行的模块。</li>
+</ul>
+<ul>
+  <li><code>args</code> [string[]](https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type) 字符串参数列表。</li>
+</ul>
+<ul>
+  <li><code>options</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></li>
+</ul>
+<ul>
+  <li><code>cwd</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> | <a href="https://nodejs.cn/api/url.html#the-whatwg-url-api">URL</a> 子进程的当前工作目录。</li>
+</ul>
+<ul>
+  <li><code>detached</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Boolean_type">boolean</a> 准备子进程独立于其父进程运行。具体行为取决于平台，参见 <a href="https://nodejs.cn/api/child_process.html#optionsdetached"><code>options.detached</code></a>。</li>
+</ul>
+<ul>
+  <li><code>env</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a> 环境变量键值对。默认值：<code>process.env</code>。</li>
+</ul>
+<ul>
+  <li><code>execPath</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> 用于创建子进程的可执行文件。</li>
+</ul>
+<ul>
+  <li><code>execArgv</code> [string[]](https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type) 传给可执行文件的字符串参数列表。默认值：<code>process.execArgv</code>。</li>
+</ul>
+<ul>
+  <li><code>gid</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Number_type">number</a> 设置进程的组标识（请参阅 <a href="http://man7.org/linux/man-pages/man2/setgid.2.html"><code>setgid(2)</code></a>）。</li>
+</ul>
+<ul>
+  <li><code>serialization</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> 指定用于在进程之间发送消息的序列化类型。可能的值为 <code>&#39;json&#39;</code> 和 <code>&#39;advanced&#39;</code>。有关详细信息，请参阅 <a href="https://nodejs.cn/api/child_process.html#advanced-serialization">高级序列化</a>。默认值：<code>&#39;json&#39;</code>。</li>
+</ul>
+<ul>
+  <li><code>signal</code> <a href="https://nodejs.cn/api/globals.html#class-abortsignal">AbortSignal</a> 允许使用中止信号关闭子进程。</li>
+</ul>
+<ul>
+  <li><code>killSignal</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> | <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Number_type">integer</a> 当衍生的进程将被超时或中止信号杀死时要使用的信号值。默认值：<code>&#39;SIGTERM&#39;</code>。</li>
+</ul>
+<ul>
+  <li><code>silent</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Boolean_type">boolean</a> 如果为 <code>true</code>，则子进程的标准输入、标准输出和标准错误将通过管道传输到父进程，否则它们将从父进程继承，有关详细信息，请参阅 <a href="https://nodejs.cn/api/child_process.html#child_processspawncommand-args-options"><code>child_process.spawn()</code></a> 的 <a href="https://nodejs.cn/api/child_process.html#optionsstdio"><code>stdio</code></a> 的 <code>&#39;pipe&#39;</code> 和 <code>&#39;inherit&#39;</code> 选项。默认值：<code>false</code>。</li>
+</ul>
+<ul>
+  <li><code>stdio</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a> | <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> 参见 <a href="https://nodejs.cn/api/child_process.html#child_processspawncommand-args-options"><code>child_process.spawn()</code></a> 的 <a href="https://nodejs.cn/api/child_process.html#optionsstdio"><code>stdio</code></a>。提供此选项时，它会覆盖 <code>silent</code>。如果使用数组变体，则它必须恰好包含一个值为 <code>&#39;ipc&#39;</code> 的条目，否则将抛出错误。例如 <code>[0, 1, 2, &#39;ipc&#39;]</code>。</li>
+</ul>
+<ul>
+  <li><code>uid</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Number_type">number</a> 设置进程的用户身份（请参阅 <a href="http://man7.org/linux/man-pages/man2/setuid.2.html"><code>setuid(2)</code></a>）。</li>
+</ul>
+<ul>
+  <li><code>windowsVerbatimArguments</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Boolean_type">boolean</a> 在 Windows 上不为参数加上引号或转义。在 Unix 上被忽略。默认值：<code>false</code>。</li>
+</ul>
+<ul>
+  <li><code>timeout</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Number_type">number</a> 允许进程运行的最长时间（以毫秒为单位）。默认值：<code>undefined</code>。</li>
+</ul>
+<ul>
+  <li>返回：<a href="https://nodejs.cn/api/child_process.html#class-childprocess">ChildProcess</a></li>
+</ul>
+<p>默认用<a href="https://nodejs.cn/api/process.html#processexecpath"><code>process.execPath</code></a> （node的绝对路径）衍生新的 Node.js 实例</p>
+<p>不支持shell选项 <code>child_process.fork()</code> 不会克隆当前进程</p>
+<p>使用signal</p>
+<pre><code data-language="js">if (process.argv[2] === &#39;child&#39;) {
+  setTimeout(() =&gt; {
+    console.log(`Hello from ${process.argv[2]}!`);
+  }, 1_000);
+} else {
+  const { fork } = require(&#39;node:child_process&#39;);
+  const controller = new AbortController();
+  const { signal } = controller;
+  const child = fork(__filename, [&#39;child&#39;], { signal });
+  child.on(&#39;error&#39;, (err) =&gt; {
+    // This will be called with err being an AbortError if the controller aborts
+  });
+  controller.abort(); // Stops the child process
+}</code></pre>
+<h4><code>child_process.spawn(command[, args][, options])</code></h4>
+<p>可以开启shell衍生</p>
+<ul>
+  <li><code>command</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> 要运行的命令。</li>
+</ul>
+<ul>
+  <li><code>args</code> [string[]](https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type) 字符串参数列表。</li>
+</ul>
+<ul>
+  <li><code>options</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></li>
+</ul>
+<ul>
+  <li><code>cwd</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> | <a href="https://nodejs.cn/api/url.html#the-whatwg-url-api">URL</a> 子进程的当前工作目录。</li>
+</ul>
+<ul>
+  <li><code>env</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a> 环境变量键值对。默认值：<code>process.env</code>。</li>
+</ul>
+<ul>
+  <li><code>argv0</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> 显式设置发送给子进程的 <code>argv[0]</code> 的值。如果未指定，这将设置为 <code>command</code>。</li>
+</ul>
+<ul>
+  <li><code>stdio</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a> | <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> 子进程的标准输入输出配置（参见 <a href="https://nodejs.cn/api/child_process.html#optionsstdio"><code>options.stdio</code></a>）。</li>
+</ul>
+<ul>
+  <li><code>detached</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Boolean_type">boolean</a> 准备子进程独立于其父进程运行。具体行为取决于平台，参见 <a href="https://nodejs.cn/api/child_process.html#optionsdetached"><code>options.detached</code></a>。</li>
+</ul>
+<ul>
+  <li><code>uid</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Number_type">number</a> 设置进程的用户身份（请参阅 <a href="http://man7.org/linux/man-pages/man2/setuid.2.html"><code>setuid(2)</code></a>）。</li>
+</ul>
+<ul>
+  <li><code>gid</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Number_type">number</a> 设置进程的组标识（请参阅 <a href="http://man7.org/linux/man-pages/man2/setgid.2.html"><code>setgid(2)</code></a>）。</li>
+</ul>
+<ul>
+  <li><code>serialization</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> 指定用于在进程之间发送消息的序列化类型。可能的值为 <code>&#39;json&#39;</code> 和 <code>&#39;advanced&#39;</code>。有关详细信息，请参阅 <a href="https://nodejs.cn/api/child_process.html#advanced-serialization">高级序列化</a>。默认值：<code>&#39;json&#39;</code>。</li>
+</ul>
+<ul>
+  <li><code>shell</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Boolean_type">boolean</a> | <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> 如果是 <code>true</code>，则在 shell 内运行 <code>command</code>。在 Unix 上使用 <code>&#39;/bin/sh&#39;</code>，在 Windows 上使用 <code>process.env.ComSpec</code>。可以将不同的 shell 指定为字符串。参见 <a href="https://nodejs.cn/api/child_process.html#shell-requirements">Shell 要求</a> 和 <a href="https://nodejs.cn/api/child_process.html#default-windows-shell">默认 Windows shell</a>。默认值：<code>false</code>（无壳）。</li>
+</ul>
+<ul>
+  <li><code>windowsVerbatimArguments</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Boolean_type">boolean</a> 在 Windows 上不为参数加上引号或转义。在 Unix 上被忽略。当指定了 <code>shell</code> 并且是 CMD 时，则自动设置为 <code>true</code>。默认值：<code>false</code>。</li>
+</ul>
+<ul>
+  <li><code>windowsHide</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Boolean_type">boolean</a> 隐藏通常在 Windows 系统上创建的子进程控制台窗口。默认值：<code>false</code>。</li>
+</ul>
+<ul>
+  <li><code>signal</code> <a href="https://nodejs.cn/api/globals.html#class-abortsignal">AbortSignal</a> 允许使用 AbortSignal 中止子进程。</li>
+</ul>
+<ul>
+  <li><code>timeout</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Number_type">number</a> 允许进程运行的最长时间（以毫秒为单位）。默认值：<code>undefined</code>。</li>
+</ul>
+<ul>
+  <li><code>killSignal</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> | <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Number_type">integer</a> 当衍生的进程将被超时或中止信号杀死时要使用的信号值。默认值：<code>&#39;SIGTERM&#39;</code>。</li>
+</ul>
+<ul>
+  <li>返回：<a href="https://nodejs.cn/api/child_process.html#class-childprocess">ChildProcess</a></li>
+</ul>
+<p>运行 <code>ls -lh /usr</code>、捕获 <code>stdout</code>、<code>stderr</code> 和退出码的示例：</p>
+<pre><code data-language="js">const { spawn } = require(&#39;node:child_process&#39;);
+const ls = spawn(&#39;ls&#39;, [&#39;-lh&#39;, &#39;/usr&#39;]);
+
+ls.stdout.on(&#39;data&#39;, (data) =&gt; {
+  console.log(`stdout: ${data}`);
+});
+
+ls.stderr.on(&#39;data&#39;, (data) =&gt; {
+  console.error(`stderr: ${data}`);
+});
+
+ls.on(&#39;close&#39;, (code) =&gt; {
+  console.log(`child process exited with code ${code}`);
+});</code></pre>
+<p>检查失败 <code>spawn</code> 的示例：</p>
+<pre><code data-language="js">const { spawn } = require(&#39;node:child_process&#39;);
+const subprocess = spawn(&#39;bad_command&#39;);
+
+subprocess.on(&#39;error&#39;, (err) =&gt; {
+  console.error(&#39;Failed to start subprocess.&#39;);
+});</code></pre>
+<p>某些平台（macOS、Linux）将使用 <code>argv[0]</code> 的值作为进程标头，而其他平台（Windows、SunOS）将使用 <code>command</code>。</p>
+<p>Node.js 在启动时会用 <code>process.execPath</code> 覆盖 <code>argv[0]</code>，因此 Node.js 子进程中的 <code>process.argv[0]</code> 不会匹配从父进程传给 <code>spawn</code> 的 <code>argv0</code> 参数。改为使用 <code>process.argv0</code> 属性检索它。</p>
+<p><code>signal</code> 选项同上</p>
+<h5><code>options.detached</code></h5>
+<p>Windows 上，将 <code>options.detached</code> 设置为 <code>true</code> 可以让子进程在父进程退出后继续运行。子进程将有自己的控制台窗口。一旦为子进程启用，则它就不能被禁用。</p>
+<p>在非 Windows 平台上，如果 <code>options.detached</code> 设置为 <code>true</code>，则子进程将成为新进程组和会话的领导者。子进程可以在父进程退出后继续运行，不管它们是否分离。</p>
+<p>默认情况下，父进程将等待分离的子进程退出。为了防止父进程等待给定的 <code>subprocess</code> 退出，则使用 <code>subprocess.unref()</code> 方法。这样做会使父进程的事件循环不将子进程包括在其引用计数中，从而允许父进程独立于子进程退出，除非在子进程和父进程之间建立了 IPC 通道。</p>
+<p>当使用 <code>detached</code> 选项启动长时间运行的进程时，进程在父进程退出后不会一直在后台运行，除非提供了未连接到父进程的 <code>stdio</code> 配置。如果继承了父进程的 <code>stdio</code>，则子进程将保持与控制终端的连接。</p>
+<p>长时间运行的进程的示例，通过分离并忽略其父进程的 <code>stdio</code> 文件描述符，以忽略父进程的终止：</p>
+<pre><code data-language="js">const { spawn } = require(&#39;node:child_process&#39;);
+
+const subprocess = spawn(process.argv[0], [&#39;child_program.js&#39;], {
+  detached: true,
+  stdio: &#39;ignore&#39;,
+});
+
+subprocess.unref();</code></pre>
+<h5><code>options.stdio</code></h5>
+<p><code>options.stdio</code> 选项用于配置在父进程和子进程之间建立的管道。默认情况下，子进程的标准输入、标准输出和标准错误被重定向到 <a href="https://nodejs.cn/api/child_process.html#class-childprocess"><code>ChildProcess</code></a> 对象上相应的 <a href="https://nodejs.cn/api/child_process.html#subprocessstdin"><code>subprocess.stdin</code></a>、<a href="https://nodejs.cn/api/child_process.html#subprocessstdout"><code>subprocess.stdout</code></a> 和 <a href="https://nodejs.cn/api/child_process.html#subprocessstderr"><code>subprocess.stderr</code></a> 流。这相当于将 <code>options.stdio</code> 设置为等于 <code>[&#39;pipe&#39;, &#39;pipe&#39;, &#39;pipe&#39;]</code>。</p>
+<p><code>options.stdio</code> 可能是以下字符串之一：</p>
+<ul>
+  <li><code>&#39;pipe&#39;</code>：相当于 <code>[&#39;pipe&#39;, &#39;pipe&#39;, &#39;pipe&#39;]</code>（默认）</li>
+  <li><code>&#39;overlapped&#39;</code>：相当于 <code>[&#39;overlapped&#39;, &#39;overlapped&#39;, &#39;overlapped&#39;]</code></li>
+  <li><code>&#39;ignore&#39;</code>：相当于 <code>[&#39;ignore&#39;, &#39;ignore&#39;, &#39;ignore&#39;]</code></li>
+  <li><code>&#39;inherit&#39;</code>：相当于 <code>[&#39;inherit&#39;, &#39;inherit&#39;, &#39;inherit&#39;]</code> 或 <code>[0, 1, 2]</code></li>
+</ul>
+<p>否则，<code>options.stdio</code> 的值是一个数组 个索引对应于子进程中的文件描述符。文件描述符 0、1 和 2 分别对应于标准输入、标准输出和标准错误</p>
+<blockquote><a href="https://nodejs.cn/api/child_process.html#optionsstdio">详细字端解释</a></blockquote>
+<h4><code>child_process.execFileSync(file[, args][, options])</code></h4>
+<h4><code>child_process.execSync(command[, options])</code></h4>
+<h4><code>child_process.spawnSync(command[, args][, options])</code></h4>
+<p><a href="https://nodejs.cn/api/child_process.html#child_processspawnsynccommand-args-options"><code>child_process.spawnSync()</code></a>、<a href="https://nodejs.cn/api/child_process.html#child_processexecsynccommand-options"><code>child_process.execSync()</code></a> 和 <a href="https://nodejs.cn/api/child_process.html#child_processexecfilesyncfile-args-options"><code>child_process.execFileSync()</code></a> 方法是同步的，将阻塞 Node.js 事件循环，暂停执行任何其他代码，直到衍生进程退出</p>
+</section>
+<section>
+<h2><span class="num">05</span>类：<code>ChildProcess</code></h2>
+<ul>
+  <li>继承：<a href="https://nodejs.cn/api/events.html#class-eventemitter">EventEmitter</a></li>
+</ul>
+<p>派生的子进程</p>
+<h4>事件：<code>&#39;close&#39;</code></h4>
+<ul>
+  <li><code>code</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Number_type">number</a> 如果子进程自己退出，则为退出码。</li>
+</ul>
+<ul>
+  <li><code>signal</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> 终止子进程的信号。</li>
+</ul>
+<p><code>&#39;close&#39;</code> 事件在进程结束并且子进程的 stdio 流关闭后触发。这与 <a href="https://nodejs.cn/api/child_process.html#event-exit"><code>&#39;exit&#39;</code></a> 事件不同，因为多个进程可能共享相同的 stdio 流。<code>&#39;close&#39;</code> 事件将始终在 <a href="https://nodejs.cn/api/child_process.html#event-exit"><code>&#39;exit&#39;</code></a> 已经触发后触发，或者如果子项未能生成则为 <a href="https://nodejs.cn/api/child_process.html#event-error"><code>&#39;error&#39;</code></a>。</p>
+<pre><code data-language="js">const { spawn } = require(&#39;node:child_process&#39;);
+const ls = spawn(&#39;ls&#39;, [&#39;-lh&#39;, &#39;/usr&#39;]);
+
+ls.stdout.on(&#39;data&#39;, (data) =&gt; {
+  console.log(`stdout: ${data}`);
+});
+
+ls.on(&#39;close&#39;, (code) =&gt; {
+  console.log(`child process close all stdio with code ${code}`);
+});
+
+ls.on(&#39;exit&#39;, (code) =&gt; {
+  console.log(`child process exited with code ${code}`);
+});</code></pre>
+<h4>事件：<code>&#39;disconnect&#39;</code></h4>
+<p><code>&#39;disconnect&#39;</code> 事件在调用父进程中的 <a href="https://nodejs.cn/api/child_process.html#subprocessdisconnect"><code>subprocess.disconnect()</code></a> 方法或子进程中的 <a href="https://nodejs.cn/api/process.html#processdisconnect"><code>process.disconnect()</code></a> 方法后触发。断开连接后无法再发送或接收消息，<a href="https://nodejs.cn/api/child_process.html#subprocessconnected"><code>subprocess.connected</code></a> 属性为 <code>false</code>。</p>
+<h4>事件：<code>&#39;error&#39;</code></h4>
+<p>-</p>
+<ul>
+  <li><code>err</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a> 错误。</li>
+</ul>
+<p><code>&#39;error&#39;</code> 事件在以下情况下触发：</p>
+<ul>
+  <li>无法生成该进程。</li>
+</ul>
+<ul>
+  <li>无法终止进程。</li>
+</ul>
+<ul>
+  <li>向子进程发送消息失败。</li>
+</ul>
+<ul>
+  <li>子进程已通过 <code>signal</code> 选项中止。</li>
+</ul>
+<p>发生错误后，<code>&#39;exit&#39;</code> 事件可能会触发，也可能不会触发。同时监听 <code>&#39;exit&#39;</code> 和 <code>&#39;error&#39;</code> 事件时，防止意外调用处理程序函数多次。</p>
+<h4>事件：<code>&#39;exit&#39;</code></h4>
+<ul>
+  <li><code>code</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Number_type">number</a> 如果子进程自己退出，则为退出码。</li>
+  <li><code>signal</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a> 终止子进程的信号。</li>
+</ul>
+<p>触发 <code>&#39;exit&#39;</code> 事件时，子进程 stdio 流可能仍处于打开状态。</p>
+<h4>事件：<code>&#39;message&#39;</code></h4>
+<ul>
+  <li><code>message</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a> 解析的 JSON 对象或原始值。</li>
+</ul>
+<ul>
+  <li><code>sendHandle</code> <a href="https://nodejs.cn/api/net.html#serverlistenhandle-backlog-callback">Handle</a> <a href="https://nodejs.cn/api/net.html#class-netsocket"><code>net.Socket</code></a> 或 <a href="https://nodejs.cn/api/net.html#class-netserver"><code>net.Server</code></a> 对象、或未定义。</li>
+</ul>
+<p>当子进程使用 <a href="https://nodejs.cn/api/process.html#processsendmessage-sendhandle-options-callback"><code>process.send()</code></a> 发送消息时会触发 <code>&#39;message&#39;</code> 事件。</p>
+<p>果在生成子进程时将 <code>serialization</code> 选项设置为 <code>&#39;advanced&#39;</code>，则 <code>message</code> 参数可以包含 JSON 无法表示的数据。有关详细信息，请参阅 <a href="https://nodejs.cn/api/child_process.html#advanced-serialization">高级序列化</a>。</p>
+<h4>事件：<code>&#39;spawn&#39;</code></h4>
+<p>一旦子进程成功生成，就会触发 <code>&#39;spawn&#39;</code> 事件。如果子进程没有成功生成，则不会触发 <code>&#39;spawn&#39;</code> 事件，而是触发 <code>&#39;error&#39;</code> 事件。</p>
+<p><code>spawn&#39;</code> 事件发生在所有其他事件之前，并且发生在通过 <code>stdout</code> 或 <code>stderr</code> 接收任何数据之前。</p>
+<p>无论生成的进程中是否发生错误，都会触发 <code>&#39;spawn&#39;</code> 事件。例如，如果 <code>bash some-command</code> 成功生成，则 <code>&#39;spawn&#39;</code> 事件将触发，但 <code>bash</code> 可能无法生成 <code>some-command</code>。此警告在使用 <code>{ shell: true }</code> 时也适用</p>
+<h4><code>subprocess.channel</code></h4>
+<ul>
+  <li><a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a> 代表子进程的 IPC 通道的管道。 不存在 IPC 通道，则此属性为 <code>undefined</code></li>
+</ul>
+<h5><code>subprocess.channel.ref()</code>/<code>subprocess.channel.unref()</code></h5>
+<p>IPC 通道保持父进程的事件循环运行 / 不保持</p>
+<h4><code>subprocess.connected</code></h4>
+<ul>
+  <li><a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Boolean_type">boolean</a> 调用 <code>subprocess.disconnect()</code> 后设置为 <code>false</code>。</li>
+</ul>
+<p>为 <code>false</code> 时，将无法再发送或接收消息</p>
+<h4><code>subprocess.disconnect()</code></h4>
+<p>关闭父子之间的 IPC 通道，允许子级在没有其他连接保持活动状态时优雅地退出。调用此方法后，父进程和子进程中的 <code>subprocess.connected</code> 和 <code>process.connected</code> 属性（分别）将设置为 <code>false</code>，进程之间将不再可能传递消息。</p>
+<h4><code>subprocess.exitCode</code></h4>
+<p><code>subprocess.exitCode</code> 属性表示子进程的退出代码。如果子进程仍在运行，则该字段将为 <code>null</code>。</p>
+<h4><code>subprocess.kill([signal])</code></h4>
+<ul>
+  <li><code>signal</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Number_type">number</a> | <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#String_type">string</a></li>
+  <li>返回：<a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Boolean_type">boolean</a></li>
+</ul>
+<p><code>subprocess.kill()</code> 方法向子进程发送信号。如果没有给出参数，进程将被发送 <code>&#39;SIGTERM&#39;</code> 信号 请参阅 <a href="http://man7.org/linux/man-pages/man7/signal.7.html"><code>signal(7)</code></a>。</p>
+<p>如果 <a href="http://man7.org/linux/man-pages/man2/kill.2.html"><code>kill(2)</code></a>成功，该函数返回 <code>true</code>，否则返回 <code>false</code>。</p>
+<pre><code data-language="js">const { spawn } = require(&#39;node:child_process&#39;);
+const grep = spawn(&#39;grep&#39;, [&#39;ssh&#39;]);
+
+grep.on(&#39;close&#39;, (code, signal) =&gt; {
+  console.log(
+    `child process terminated due to receipt of signal ${signal}`);
+});
+
+// Send SIGHUP to process.
+grep.kill(&#39;SIGHUP&#39;);</code></pre>
+<p>虽然该函数被称为 <code>kill</code>，但传递给子进程的信号可能不会真正终止该进程。</p>
+<h4><code>subprocess.killed</code></h4>
+<ul>
+  <li><a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Boolean_type">boolean</a> <code>subprocess.kill()</code> 用于成功向子进程发送信号后设置为 <code>true</code>。</li>
+</ul>
+<p><code>subprocess.killed</code> 属性表示子进程是否成功接收到来自 <code>subprocess.kill()</code> 的信号。<code>killed</code> 属性并不表示子进程已经终止。</p>
+<h4><code>subprocess.pid</code></h4>
+<p>回子进程的进程标识符 (PID)。如果子进程由于错误而未能生成，则值为 <code>undefined</code> 并触发 <code>error</code></p>
+<h4><code>subprocess.ref()</code> / <code>subprocess.unref()</code></h4>
+<p>默认情况下，父进程将等待分离的子进程退出(ref)。为了防止父进程等待给定的 <code>subprocess</code> 退出，则使用 <code>subprocess.unref()</code> 方法。这样做会使父进程的事件循环不将子进程包括在其引用计数中，从而允许父进程独立于子进程退出，除非在子进程和父进程之间建立了 IPC 通道。</p>
+<pre><code data-language="js">const { spawn } = require(&#39;node:child_process&#39;);
+
+const subprocess = spawn(process.argv[0], [&#39;child_program.js&#39;], {
+  detached: true,
+  stdio: &#39;ignore&#39;,
+});
+
+subprocess.unref();</code></pre>
+<h4><code>subprocess.send(message[, sendHandle[, options]][, callback])</code></h4>
+<ul>
+  <li><code>message</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></li>
+</ul>
+<ul>
+  <li><code>sendHandle</code> <a href="https://nodejs.cn/api/net.html#serverlistenhandle-backlog-callback">Handle</a></li>
+</ul>
+<ul>
+  <li><code>options</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a> <code>options</code> 参数（如果存在）是用于参数化某些类型句柄的发送的对象。<code>options</code> 支持以下属性：</li>
+</ul>
+<ul>
+  <li><code>keepOpen</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Boolean_type">boolean</a> 当传入 <code>net.Socket</code> 实例时可以使用的值。当为 <code>true</code> 时，套接字在发送过程中保持打开状态。默认值：<code>false</code>。</li>
+</ul>
+<ul>
+  <li><code>callback</code> <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function">Function</a></li>
+</ul>
+<ul>
+  <li>返回：<a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Boolean_type">boolean</a></li>
+</ul>
+<p>当父进程和子进程之间已经建立了 IPC 通道时（即使用 <a href="https://nodejs.cn/api/child_process.html#child_processforkmodulepath-args-options"><code>child_process.fork()</code></a> 时），可以使用 <code>subprocess.send()</code> 方法向子进程发送消息</p>
+<p>当子进程是 Node.js 实例时，可以通过 <a href="https://nodejs.cn/api/process.html#event-message"><code>&#39;message&#39;</code></a> 事件接收这些消息。</p>
+<p>父：</p>
+<pre><code data-language="js">const cp = require(&#39;node:child_process&#39;);
+const n = cp.fork(`${__dirname}/sub.js`);
+
+n.on(&#39;message&#39;, (m) =&gt; {
+  console.log(&#39;PARENT got message:&#39;, m);
+});
+
+// Causes the child to print: CHILD got message: { hello: &#39;world&#39; }
+n.send({ hello: &#39;world&#39; });</code></pre>
+<p>子:</p>
+<pre><code data-language="js">process.on(&#39;message&#39;, (m) =&gt; {
+  console.log(&#39;CHILD got message:&#39;, m);
+});
+
+// Causes the parent to print: PARENT got message: { foo: &#39;bar&#39;, baz: null }
+process.send({ foo: &#39;bar&#39;, baz: NaN });</code></pre>
+<p><code>subprocess.send()</code> 的可选 <code>sendHandle</code> 参数用于将 TCP 服务器或套接字对象传递给子进程</p>
+<p>可选的 <code>callback</code> 是一个函数，在消息发送后但在子级可能收到消息之前调用。该函数使用单个参数调用：成功时为 <code>null</code>，失败时为 <a href="https://nodejs.cn/api/errors.html#class-error"><code>Error</code></a> 对象。</p>
+<p>如果没有提供 <code>callback</code> 函数，无法发送消息，<a href="https://nodejs.cn/api/child_process.html#class-childprocess"><code>ChildProcess</code></a> 对象将触发 <code>&#39;error&#39;</code> 事件。例如，当子进程已经退出时，可能会发生这种情况。</p>
+<p>发送服务器对象</p>
+<pre><code data-language="js">const subprocess = require(&#39;node:child_process&#39;).fork(&#39;subprocess.js&#39;);
+
+// Open up the server object and send the handle.
+const server = require(&#39;node:net&#39;).createServer();
+server.on(&#39;connection&#39;, (socket) =&gt; {
+  socket.end(&#39;handled by parent&#39;);
+});
+server.listen(1337, () =&gt; {
+  subprocess.send(&#39;server&#39;, server);
+});</code></pre>
+<p>子：</p>
+<pre><code data-language="js">process.on(&#39;message&#39;, (m, server) =&gt; {
+
+  // 接受也是第二个参数
+  
+  if (m === &#39;server&#39;) {
+    server.on(&#39;connection&#39;, (socket) =&gt; {
+      socket.end(&#39;handled by child&#39;);
+    });
+  }
+});</code></pre>
+<p>一旦服务器现在在父子之间共享，一些连接可以由父处理，一些连接由子处理。</p>
+<p>发送套接字对象：</p>
+<pre><code data-language="js">const { fork } = require(&#39;node:child_process&#39;);
+const normal = fork(&#39;subprocess.js&#39;, [&#39;normal&#39;]);
+const special = fork(&#39;subprocess.js&#39;, [&#39;special&#39;]);
+
+//打开服务器并发送套接字给子节点。使用pauseOnConnect来阻止套接字在发送到子进程之前被读取
+const server = require(&#39;node:net&#39;).createServer({ pauseOnConnect: true });
+server.on(&#39;connection&#39;, (socket) =&gt; {
+
+  // If this is special priority...
+  if (socket.remoteAddress === &#39;74.125.127.100&#39;) {
+    special.send(&#39;socket&#39;, socket);
+    return;
+  }
+  // This is normal priority.
+  normal.send(&#39;socket&#39;, socket);
+});
+server.listen(1337);</code></pre>
+<p>子：</p>
+<pre><code data-language="js">process.on(&#39;message&#39;, (m, socket) =&gt; {
+  if (m === &#39;socket&#39;) {
+    if (socket) {
+      //检查客户端套接字是否存在。
+      //在此时间间隔内，套接字可能被关闭
+      //发送和子进程接收的时间。
+      socket.end(`Request handled with ${process.argv[2]} priority`);
+    }
+  }
+});</code></pre>
+<p>不要在已传递给子进程的套接字上使用 <code>.maxConnections</code>。父级无法跟踪套接字何时被销毁。</p>
+<p>子进程中的任何 <code>&#39;message&#39;</code> 处理程序都应验证 <code>socket</code> 是否存在，因为在将连接发送给子进程期间连接可能已关闭。</p>
+<h4><code>subprocess.signalCode</code></h4>
+<p>属性表示子进程接收到的信号（如果有），否则为 <code>null</code>。</p>
+<h4><code>subprocess.spawnargs</code></h4>
+<p>array: 属性表示启动子进程时使用的命令行参数的完整列表。</p>
+<h4><code>subprocess.spawnfile</code></h4>
+<p>属性表示启动的子进程的可执行文件名。</p>
+<p>对于 <a href="https://nodejs.cn/api/child_process.html#child_processforkmodulepath-args-options"><code>child_process.fork()</code></a>，其值将等于 <a href="https://nodejs.cn/api/process.html#processexecpath"><code>process.execPath</code></a>。对于 <a href="https://nodejs.cn/api/child_process.html#child_processspawncommand-args-options"><code>child_process.spawn()</code></a>，它的值将是可执行文件的名称。对于 <a href="https://nodejs.cn/api/child_process.html#child_processexeccommand-options-callback"><code>child_process.exec()</code></a>，其值将是启动子进程的 shell 的名称。</p>
+<h4><code>subprocess.stderr</code></h4>
+<ul>
+  <li><a href="https://nodejs.cn/api/stream.html#class-streamreadable">stream.Readable</a> | <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Null_type">null</a> | <a href="https://web.nodejs.cn/en-US/docs/Web/JavaScript/Data_structures#Undefined_type">undefined</a></li>
+</ul>
+<p>代表子进程的 <code>stderr</code> 的 <code>Readable Stream</code>。 如果子级生成时 <code>stdio[2]</code> 设置为 <code>&#39;pipe&#39;</code> 以外的任何值，那么这将是 <code>null</code>。 <code>subprocess.stderr</code> 是 <code>subprocess.stdio[2]</code> 的别名。这两个属性将引用相同的值。 如果无法成功生成子进程，则 <code>subprocess.stderr</code> 属性可以是 <code>null</code> 或 <code>undefined</code>。</p>
+<h4><code>subprocess.stdin</code></h4>
+<p>代表子进程的 <code>stdin</code> 的 <code>Writable Stream</code>。 如果子进程等待读取其所有输入，则子进程将不会继续，直到通过 <code>end()</code> 关闭此流。 <code>subprocess.stdin</code> 是 <code>subprocess.stdio[0]</code> 的别名 其他同上</p>
+<h4><code>subprocess.stdout</code></h4>
+<p>代表子进程的 <code>stdout</code> 的 <code>Readable Stream</code>。 <code>subprocess.stdout</code> 是 <code>subprocess.stdio[1]</code>别名</p>
+<pre><code data-language="js">const { spawn } = require(&#39;node:child_process&#39;);
+
+const subprocess = spawn(&#39;ls&#39;);
+
+subprocess.stdout.on(&#39;data&#39;, (data) =&gt; {
+  console.log(`Received chunk ${data}`);
+});</code></pre>
+<h4><code>subprocess.stdio</code></h4>
+<p>到子进程的管道稀疏数组</p>
+<p>对应于传递给 <a href="https://nodejs.cn/api/child_process.html#child_processspawncommand-args-options"><code>child_process.spawn()</code></a> 的 <a href="https://nodejs.cn/api/child_process.html#optionsstdio"><code>stdio</code></a> 选项中已设置为值 <code>&#39;pipe&#39;</code> 的位置。</p>
+</section>
+<section>
+<h2><span class="num">06</span><code>maxBuffer</code> 和 Unicode</h2>
+<p><code>maxBuffer</code> 选项指定 <code>stdout</code> 或 <code>stderr</code> 上允许的最大字节数。如果超过这个值，则子进程终止。这会影响包含多字节字符编码（例如 UTF-8 或 UTF-16）的输出。例如，虽然只有 4 个字符，但 <code>console.log(&#39;中文测试&#39;)</code> 将向 <code>stdout</code> 发送 13 个 UTF-8 编码字节。</p>
+</section>
+<section>
+<h2><span class="num">07</span>Shell 要求<a href="https://nodejs.cn/api/child_process.html#shell-%E8%A6%81%E6%B1%82">#</a></h2>
+<p>shell 应该理解 <code>-c</code> 开关。如果 shell 是 <code>&#39;cmd.exe&#39;</code>，它应该理解 <code>/d /s /c</code> 开关并且命令行解析应该是兼容的。</p>
+</section>
+<section>
+<h2><span class="num">08</span>默认 Windows shell<a href="https://nodejs.cn/api/child_process.html#%E9%BB%98%E8%AE%A4-windows-shell">#</a></h2>
+<p>虽然 Microsoft 指定 <code>%COMSPEC%</code> 必须包含根环境中的 <code>&#39;cmd.exe&#39;</code> 路径，但子进程并不总是符合相同的要求。因此，在可以生成 shell 的 <code>child_process</code> 函数中，如果 <code>process.env.ComSpec</code> 不可用，则将 <code>&#39;cmd.exe&#39;</code> 用作回退。</p>
+</section>
+
+      <div class="source-note">Migrated from data/blog/202401/child_process.md</div>
+    </article>
+  </body>
+</html>

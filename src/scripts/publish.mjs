@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
-import { publicDir, readEnvFile } from '../lib/config.mjs'
+import { getBlogBasePath, publicDir, readEnvFile } from '../lib/config.mjs'
 
 const env = { ...readEnvFile(), ...process.env }
 const requiredKeys = ['BLOG_HOST', 'BLOG_USER', 'BLOG_REMOTE_DIR']
@@ -30,5 +30,7 @@ if (result.status !== 0) {
 console.log(`Published to ${destination}`)
 
 if (env.BLOG_BASE_URL) {
-  console.log(`Site: ${env.BLOG_BASE_URL}`)
+  const baseUrl = env.BLOG_BASE_URL.replace(/\/$/, '')
+  const basePath = getBlogBasePath(env)
+  console.log(`Site: ${baseUrl}${basePath || '/'}`)
 }

@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>React状态管理</title>
+    <meta name="description" content="React各类状态管理工具 以及最佳推荐" />
+    <style>
+      :root {
+        --paper: #f7f7f5;
+        --paper-edge: #efefea;
+        --ink: #1a1a1a;
+        --ink-soft: #4a4a4a;
+        --ink-faint: #7a7a7a;
+        --rule: #d8d8d2;
+        --rule-soft: #e8e8e2;
+        --accent: #6f9bb8;
+        --accent-soft: #d9e6f0;
+        --accent-faint: #eef4f8;
+        --warn: #b88a4a;
+        --warn-soft: #f5ecdc;
+        --danger: #a05050;
+        --code-bg: #ececea;
+
+        /* Semantic palette for three-layer cards. Rename freely
+           (e.g. --layer-a / --layer-b / --layer-c) when the three
+           layers in the doc are not brain/hands/session. */
+        --brain: #6f9bb8;
+        --brain-bg: #eef4f8;
+        --hands: #b88a4a;
+        --hands-bg: #f5ecdc;
+        --session: #6b7560;
+        --session-bg: #ecede5;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { font-size: 16px; }
+
+      /* Font stacks include both English serifs/monospace and CJK
+         fallbacks so the same template renders cleanly for English
+         or Chinese source content. */
+      body {
+        font-family:
+          ui-serif, "Charter", "Iowan Old Style", "Source Serif Pro", Georgia,
+          "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+        background: var(--paper);
+        color: var(--ink);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        padding: 64px 24px 96px;
+      }
+
+      .doc { max-width: 840px; margin: 0 auto; }
+
+      /* ─── Header ─── */
+      .doc-header {
+        border-bottom: 1px solid var(--rule);
+        padding-bottom: 28px;
+        margin-bottom: 48px;
+      }
+      .doc-eyebrow {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 14px;
+      }
+      .doc-title {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 34px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+      }
+      .doc-subtitle {
+        font-size: 16px;
+        color: var(--ink-soft);
+        margin-top: 10px;
+        font-style: italic;
+      }
+      .doc-meta {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        color: var(--ink-faint);
+        margin-top: 18px;
+        display: flex;
+        gap: 24px;
+      }
+
+      /* ─── TL;DR ─── */
+      .tldr {
+        background: var(--accent-faint);
+        border-left: 2px solid var(--accent);
+        padding: 20px 24px;
+        margin-bottom: 56px;
+        font-size: 15px;
+      }
+      .tldr-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      /* ─── Sections ─── */
+      section { margin-bottom: 56px; }
+      h2 {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.005em;
+        margin-bottom: 18px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--rule);
+      }
+      h2 .num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-weight: 500;
+        margin-right: 14px;
+        letter-spacing: 0.05em;
+      }
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 28px 0 10px;
+      }
+      h4 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 22px 0 8px;
+      }
+      p { margin-bottom: 14px; }
+      p + p { margin-top: -2px; }
+      a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+      a:hover { border-bottom-color: var(--accent); }
+      code {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+        background: var(--code-bg);
+        padding: 1px 5px;
+        border-radius: 2px;
+      }
+      pre {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12.5px;
+        line-height: 1.55;
+        background: var(--code-bg);
+        padding: 14px 18px;
+        margin: 14px 0 18px;
+        overflow-x: auto;
+        border-left: 2px solid var(--rule);
+      }
+      pre code { background: transparent; padding: 0; }
+      ul, ol { margin: 8px 0 16px 22px; }
+      li { margin-bottom: 6px; }
+      strong { font-weight: 600; }
+      em { color: var(--ink-soft); }
+      blockquote {
+        border-left: 2px solid var(--rule);
+        padding: 4px 0 4px 18px;
+        margin: 14px 0 18px;
+        color: var(--ink-soft);
+        font-style: italic;
+      }
+
+      /* ─── Tables ─── */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 14px 0 18px;
+        font-size: 14px;
+      }
+      th, td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--rule-soft);
+        vertical-align: top;
+      }
+      th {
+        font-weight: 600;
+        font-family:
+          ui-sans-serif, system-ui,
+          "PingFang SC", "Hiragino Sans GB", sans-serif;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--ink-faint);
+        border-bottom: 1px solid var(--rule);
+      }
+      tbody tr:hover { background: rgba(0,0,0,0.015); }
+      td.num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+      }
+      td.accent { color: var(--accent); font-weight: 500; }
+
+      /* ─── Callouts ─── */
+      .callout {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 18px;
+        margin: 16px 0 20px;
+      }
+      .callout.warn {
+        border-color: #e6d4a8;
+        background: var(--warn-soft);
+      }
+      .callout.cite {
+        border-left: 2px solid var(--accent);
+        border-top: none; border-right: none; border-bottom: none;
+        background: var(--accent-faint);
+        padding-left: 22px;
+        font-style: italic;
+      }
+      .callout-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .callout.warn .callout-label { color: var(--warn); }
+      .cite-source {
+        font-style: normal;
+        font-size: 12px;
+        color: var(--ink-faint);
+        margin-top: 10px;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+      }
+
+      /* ─── Figure / Diagram ─── */
+      figure {
+        margin: 28px 0 32px;
+        border: 1px solid var(--rule);
+        background: #fff;
+      }
+      figure svg { display: block; width: 100%; height: auto; }
+      figure img { display: block; width: 100%; height: auto; }
+      figcaption {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        padding: 10px 16px;
+        border-top: 1px solid var(--rule-soft);
+        background: var(--paper-edge);
+      }
+      figcaption .fig-num {
+        color: var(--accent);
+        margin-right: 10px;
+        font-weight: 600;
+      }
+
+      /* ─── N-column concept cards ─── */
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin: 20px 0 18px;
+      }
+      .cards.cols-2 { grid-template-columns: repeat(2, 1fr); }
+      .cards.cols-4 { grid-template-columns: repeat(4, 1fr); }
+      .card {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 16px 14px;
+      }
+      .card-icon {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .card-name {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 17px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .card-where {
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-style: italic;
+        margin-bottom: 10px;
+      }
+      .card-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+
+      /* tone variants for cards */
+      .card.tone-a .card-icon { color: var(--brain); }
+      .card.tone-b .card-icon { color: var(--hands); }
+      .card.tone-c .card-icon { color: var(--session); }
+
+      /* ─── Buttons / Inputs (for interactive sections) ─── */
+      .btn {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 8px 14px;
+        background: #fff;
+        color: var(--ink);
+        border: 1px solid var(--rule);
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn:hover { background: var(--paper-edge); }
+      .btn.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .btn.primary:hover { background: #5a87a4; }
+
+      input[type="text"], input[type="email"], textarea, select {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 14px;
+        padding: 8px 12px;
+        background: #fff;
+        border: 1px solid var(--rule);
+        color: var(--ink);
+        width: 100%;
+        margin-bottom: 10px;
+      }
+      input:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      /* ─── Footer ─── */
+      footer {
+        margin-top: 80px;
+        padding-top: 24px;
+        border-top: 1px solid var(--rule);
+        font-size: 12px;
+        color: var(--ink-faint);
+      }
+      footer h4 {
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        margin-bottom: 10px;
+        color: var(--ink-soft);
+      }
+      footer ul { list-style: none; margin-left: 0; }
+      footer li { margin-bottom: 4px; }
+
+      .mascot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+
+      @media (max-width: 720px) {
+        body { padding: 32px 16px 64px; }
+        .doc-title { font-size: 26px; }
+        .cards, .cards.cols-2, .cards.cols-4 { grid-template-columns: 1fr; }
+        .doc-meta { flex-wrap: wrap; gap: 12px; }
+      }
+    
+
+      .source-note {
+        border-top: 1px solid var(--rule);
+        color: var(--ink-faint);
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        margin-top: 56px;
+        padding-top: 14px;
+        text-transform: uppercase;
+      }
+</style>
+  </head>
+  <body>
+    <article class="doc">
+      <header class="doc-header">
+        <div class="doc-eyebrow"><span class="mascot"></span>React · Migrated Article</div>
+        <h1 class="doc-title">React状态管理</h1>
+        <p class="doc-subtitle">React各类状态管理工具 以及最佳推荐</p>
+        <div class="doc-meta">
+          <span>DATE · 2023-10-01</span>
+          <span>TAGS · React, Frontend</span>
+          <span>SOURCE · old blog</span>
+        </div>
+      </header>
+
+      <div class="tldr">
+        <div class="tldr-label">TL;DR</div>
+        React各类状态管理工具 以及最佳推荐
+      </div>
+
+      <section>
+<h2><span class="num">01</span>介绍</h2>
+<p>在状态共享这方面，不像 <code>Vuex</code>，<code>React</code> 的官方并没有强力推荐某种封装方案，所以 <code>React</code> 的状态管理工具五花八门，百花齐放。其中就有：</p>
+<ul>
+  <li>做什么都要 <code>dispatch</code> 的 <code>redux</code> 流派。包括：<code>react-redux</code> 、<code>dva</code>、新星代表 <code>zustand</code></li>
+  <li>响应式流派 <code>mobx</code>。以及新星代表 <code>valtio</code> ，以及一个很有特点的库 <code>resso</code></li>
+  <li>原子状态流派。来自 <code>facebook</code> 开源的 <code>recoil</code> ，以及新星代表 <code>jotai</code></li>
+  <li>完全体 <code>hooks</code> 流派。<code>hox</code>、<code>reto</code>、<code>umijs@4 内置数据流</code>，包括 <code>Vue</code> 官方推荐的新状态管理工具 <code>pinia</code> 也是这个流派。</li>
+</ul>
+<p>更为重要的一点是，传统的 MVC 模式，建议我们将视图层的逻辑层分离。而在 dva 中，页面即视图，effects 则被我们用于业务逻辑的编写。在这种思想的影响下，不论是简单还是复杂的页面，我们都习惯去创建一个 dva-model，再加上 dispatch 都不是强依赖关系，久而久之， model 越来越臃肿，关系越来越难找，吐槽声越来越大。</p>
+<p>随着技术不断发展，我们终归是要摆脱繁琐的 <code>dva</code>，寻找一个新的状态管理工具，来减少我们这一块的代码量，保护我们的秀发。</p>
+<p>音乐现阶段用的是mobx 实际上这种形式使用繁琐</p>
+</section>
+<section>
+<h2><span class="num">02</span>主流状态管理工具都是怎么做的</h2>
+<h3>传统流派 <a href="https://so.csdn.net/so/search?q=dva&amp;spm=1001.2101.3001.7020">dva</a></h3>
+<figure>
+  <img src="/blog/static/images/blog/202310/ReactStateManagement/1.png" alt="img">
+  <figcaption><span class="fig-num">FIG 1</span>img</figcaption>
+</figure>
+<p>对比 <code>dva</code> 和 <code>Vuex</code> 不能说是非常相似，只能说是一模一样了。</p>
+<ul>
+  <li><code>dva</code> 的 <code>state</code> 和 <code>Vuex</code> 的 <code>state</code>，用于存放需要共享的状态。</li>
+  <li><code>dva</code> 的 <code>reducers</code> 和 <code>Vuex</code> 的 <code>mutations</code>，用于编写修改<code>共享状态</code>的方法。</li>
+  <li><code>dva</code> 的 <code>effects</code> 和 <code>Vuex</code> 的 <code>actions</code>，用于编写存在副作用的方法，比如处理异步业务逻辑。</li>
+  <li><code>dva</code> 使用 <code>namespace</code> 属性标记子模块的名称，<code>Vuex</code> 使用 <code>modules</code> 属性，拆分子模块。</li>
+</ul>
+<h4>优点</h4>
+<ul>
+  <li>在当时没有 <code>hooks</code> API 的环境下，算是一套不错的整合方案，能够满足绝大多数的共享业务场景。</li>
+  <li>深度整合 <code>redux</code> <code>redux-saga</code> ，便于 <code>redux</code> 用户能够快速切换。</li>
+</ul>
+<h4>缺点</h4>
+<ul>
+  <li>使用时没有清晰的来源 <code>dva</code> 使用 <code>hoc</code> <code>connect</code> 的方式，将 <code>store</code> 中的属性注入到组件的 <code>props</code> 上。如下图：以 <code>JS</code> 的角度来看，products 的来源和类型都是非常不清晰的。</li>
+</ul>
+<figure>
+  <img src="/blog/static/images/blog/202310/ReactStateManagement/2.png" alt="img">
+  <figcaption><span class="fig-num">FIG 2</span>img</figcaption>
+</figure>
+<ul>
+  <li>对 <code>TypeScript</code> 支持不友好 没有清晰的依赖关系，类型支持自然也是很差的。</li>
+  <li>不能满足共享状态之间的依赖 比如我修改了当前用户角色，需要根据角色权限重新查询可访问的菜单。但我不能在<code>菜单store</code>中监听，只能在<code>用户store</code>主动触发菜单查询，或单独写一个组件，利用 <code>componentDidUpdate</code> 监听 <code>用户store</code> 再发起请求。</li>
+</ul>
+<h3>zustand</h3>
+<p>拥有 22K stars 的 <a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Fpmndrs%2Fzustand"><code>zustand</code></a> 则是非常值得尝试的传统派替代品。</p>
+<ul>
+  <li>它更简洁，直接将 <code>state</code> / <code>reducers</code> / <code>effects</code> 平铺开来，<code>function</code> 即 <code>effects</code> / <code>reducers</code> ，其它都是 <code>state</code>。</li>
+</ul>
+<p>它面向 <code>hooks</code> API，一个 <code>store</code> 就是一个 <code>hooks</code>。</p>
+<figure>
+  <img src="/blog/static/images/blog/202310/ReactStateManagement/3.png" alt="img">
+  <figcaption><span class="fig-num">FIG 3</span>img</figcaption>
+</figure>
+<ul>
+  <li>它更简洁，直接将 <code>state</code> / <code>reducers</code> / <code>effects</code> 平铺开来，<code>function</code> 即 <code>effects</code> / <code>reducers</code> ，其它都是 <code>state</code>。</li>
+  <li><code>import</code> 来源清晰，对 <code>TypeScript</code> 的支持也更友好</li>
+  <li>提供了 <code>subscribe</code> 接口，可在组件外监听状态变化，以实现状态依赖</li>
+</ul>
+<h3>响应式流派 mobx</h3>
+<figure>
+  <img src="/blog/static/images/blog/202310/ReactStateManagement/4.png" alt="img">
+  <figcaption><span class="fig-num">FIG 4</span>img</figcaption>
+</figure>
+<p>obx 的出现给 redux 带来了很大的冲击。</p>
+<p>通过一个装饰器（observer / observable），就能使普通的组件能够监听变量的变化而渲染，完全抛弃掉 state 。不仅如此，mobx 提供了 computed 等一些好东西，使 React 也能使用到 Vue 组件的特性。而从 Vue 转过来学习 React 的同学，都会对 mobx 拍手称赞。</p>
+<p>在体验过 mobx 的爽快之后，当时团队中有部分声音，是希望以后抛弃掉 state，转而全面使用 mobx 作为组件状态。是啊，一套方案，解决内部状态和共享状态两个问题，何乐而不为呢。</p>
+<h4>缺憾</h4>
+<p>很快，这种 <code>mobx</code> 为王的声音很快又消失了，因为…</p>
+<ul>
+  <li>响应式 API 和 <code>React</code> 水土不服，<code>React</code> 就是需要 <code>setState</code> 来修改状态，现在你 <code>state.value++</code> 就改了，是要造反么？新来的同学学完 <code>React</code> 基础，结果和他说，那些用不上，再学学 <code>mobx</code> 响应式吧，新同学是否会心中充满问号？</li>
+  <li>会有一些隐蔽的坑，比如往 <code>observable</code> 添加属性时，不能直接添加，而要通过 <code>extendObservable</code> ，我们有很多同学踩了这坑。</li>
+  <li>基础组件如果也使用 <code>mobx</code> 则违反了高内聚的原则，不使用，两边风格又不统一。你见过哪个组件库需要附带一套状态管理工具的？</li>
+</ul>
+<ul>
+  <li>响应式其实就是基于 <code>Proxy</code> 实现的，我明明希望传递的是一个数组，但拿到的却是一个 <code>Proxy</code>。强迫症实在受不了。</li>
+</ul>
+<h3>原子状态流派 recoil</h3>
+<figure>
+  <img src="/blog/static/images/blog/202310/ReactStateManagement/5.png" alt="img">
+  <figcaption><span class="fig-num">FIG 5</span>img</figcaption>
+</figure>
+<p>体验过 recoil 之后，我能感受到，recoil 是希望你在使用全局状态时，和 useState 的体验完全一致。是的，useRecoilState 和 useState 的使用方式几乎是完全一样的，只不过 recoil 的默认值需要使用 atom 包裹一下罢了。于是你的 atom 状态就实现全局共享了。</p>
+<p>为了解决共享状态依赖的需求，recoil 还很贴心地提供了 selector API，用于实现共享状态的拆分和依赖，你把它当作 useMemo 或者计算属性来看待就可以了。（当然 selector 还有支持写入(set)以及异步处理，但我还没找到必须要用它的场景）</p>
+<figure>
+  <img src="/blog/static/images/blog/202310/ReactStateManagement/6.png" alt="img">
+  <figcaption><span class="fig-num">FIG 6</span>img</figcaption>
+</figure>
+<p><code>recoil</code> 理念真的很简单，就是以 <code>useState</code> 的习惯实现状态共享。</p>
+<h3>hooks 完全体 （不是– hox</h3>
+<p><strong>不用惊叹了 该项目已经停止更新 😅</strong></p>
+<h4><a href="https://link.juejin.cn/?target=mailto%3Aumijs%404.x">umijs@4.x</a> 数据流方案</h4>
+<p><code>umijs@4.x</code> 正式推出后，我注意到它内置了一套和 hox 一模一样的数据流方案。我大概翻了一下，虽然它不是直接引用的 hox ，但内部实现逻辑如出一辙。</p>
+<p>它的特点是，采用约定式目录结构，不用专门写 createStore ，而是自动帮我们引入了所有 model 目录下的 hooks，并注册。在页面中则是通过统一的 useModel，通过其自动生成的 namespace 引用，比如 useModel(&#39;product&#39;)。但这也导致了依赖不明确的问题，umi4 还特地通过编写插件的方式解决跳转问题。</p>
+<p>但也正是它的约定式，产生了一些让我觉得膈应的地方：</p>
+<p>1.useModel(&#39;product&#39;) 必须要通过装插件才能点击跳转。 2.必须要在 <code>umijs@4.x</code> 体系下才能使用，无法快速复制迁移到其它的框架下使用。 3.插件偷偷帮你实现了 createStore，乍一看和普通的 hooks 完全一样，其实已经持久化了。对新人学习很不友好。（你写个 createStore 他还知道有不一样的地方，回去查。<code>umijs@4.x</code> 没看到文档根本不知道有这回事）</p>
+</section>
+<section>
+<h2><span class="num">03</span>某一天更新（最佳实践jotai!）</h2>
+<pre><code data-language="ts">import { atom, useAtom } from &#39;jotai&#39;
+
+const isCommentDrawerShowAtom = atom(false)
+
+export const useCommentDrawer = () =&gt; {
+ const [isCommentDrawerShow, setIsCommentDrawerShow] = useAtom(
+  isCommentDrawerShowAtom
+ )
+
+ return {
+  isCommentDrawerShow,
+  setIsCommentDrawerShow
+ }
+}</code></pre>
+<p>如代码所示，使用方式 与useState类似，原子状态，并且可以自由封装业务hook，写起来非常舒服 唯一遗憾 没有直接获取atom里面值的方案（想在不需要响应式时直接获取相关值）</p>
+<p>支持SSR!</p>
+</section>
+
+      <div class="source-note">Migrated from data/blog/202310/ReactStateManagement.md</div>
+    </article>
+  </body>
+</html>

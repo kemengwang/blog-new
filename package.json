@@ -4,10 +4,18 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "new": "node src/scripts/create-post.mjs",
-    "build": "node src/scripts/build-index.mjs",
+    "dev": "node src/server/index.mjs",
+    "build": "vite build --ssr src/app/entry-server.jsx --outDir dist/server",
+    "migrate:old": "node src/scripts/migrate-old-blog.mjs /Users/bytedance/workspace/study/blog",
     "publish": "node src/scripts/publish.mjs",
-    "serve": "python3 -m http.server 3436 --directory public"
+    "serve": "node src/server/index.mjs",
+    "start": "NODE_ENV=production node src/server/index.mjs"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^6.0.7",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "engines": {
     "node": ">=18"

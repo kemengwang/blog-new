@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pnpm</title>
+    <meta name="description" content="目前最佳包管理工具Pnpm！" />
+    <style>
+      :root {
+        --paper: #f7f7f5;
+        --paper-edge: #efefea;
+        --ink: #1a1a1a;
+        --ink-soft: #4a4a4a;
+        --ink-faint: #7a7a7a;
+        --rule: #d8d8d2;
+        --rule-soft: #e8e8e2;
+        --accent: #6f9bb8;
+        --accent-soft: #d9e6f0;
+        --accent-faint: #eef4f8;
+        --warn: #b88a4a;
+        --warn-soft: #f5ecdc;
+        --danger: #a05050;
+        --code-bg: #ececea;
+
+        /* Semantic palette for three-layer cards. Rename freely
+           (e.g. --layer-a / --layer-b / --layer-c) when the three
+           layers in the doc are not brain/hands/session. */
+        --brain: #6f9bb8;
+        --brain-bg: #eef4f8;
+        --hands: #b88a4a;
+        --hands-bg: #f5ecdc;
+        --session: #6b7560;
+        --session-bg: #ecede5;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { font-size: 16px; }
+
+      /* Font stacks include both English serifs/monospace and CJK
+         fallbacks so the same template renders cleanly for English
+         or Chinese source content. */
+      body {
+        font-family:
+          ui-serif, "Charter", "Iowan Old Style", "Source Serif Pro", Georgia,
+          "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+        background: var(--paper);
+        color: var(--ink);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        padding: 64px 24px 96px;
+      }
+
+      .doc { max-width: 840px; margin: 0 auto; }
+
+      /* ─── Header ─── */
+      .doc-header {
+        border-bottom: 1px solid var(--rule);
+        padding-bottom: 28px;
+        margin-bottom: 48px;
+      }
+      .doc-eyebrow {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 14px;
+      }
+      .doc-title {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 34px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+      }
+      .doc-subtitle {
+        font-size: 16px;
+        color: var(--ink-soft);
+        margin-top: 10px;
+        font-style: italic;
+      }
+      .doc-meta {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        color: var(--ink-faint);
+        margin-top: 18px;
+        display: flex;
+        gap: 24px;
+      }
+
+      /* ─── TL;DR ─── */
+      .tldr {
+        background: var(--accent-faint);
+        border-left: 2px solid var(--accent);
+        padding: 20px 24px;
+        margin-bottom: 56px;
+        font-size: 15px;
+      }
+      .tldr-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      /* ─── Sections ─── */
+      section { margin-bottom: 56px; }
+      h2 {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.005em;
+        margin-bottom: 18px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--rule);
+      }
+      h2 .num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-weight: 500;
+        margin-right: 14px;
+        letter-spacing: 0.05em;
+      }
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 28px 0 10px;
+      }
+      h4 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 22px 0 8px;
+      }
+      p { margin-bottom: 14px; }
+      p + p { margin-top: -2px; }
+      a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+      a:hover { border-bottom-color: var(--accent); }
+      code {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+        background: var(--code-bg);
+        padding: 1px 5px;
+        border-radius: 2px;
+      }
+      pre {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12.5px;
+        line-height: 1.55;
+        background: var(--code-bg);
+        padding: 14px 18px;
+        margin: 14px 0 18px;
+        overflow-x: auto;
+        border-left: 2px solid var(--rule);
+      }
+      pre code { background: transparent; padding: 0; }
+      ul, ol { margin: 8px 0 16px 22px; }
+      li { margin-bottom: 6px; }
+      strong { font-weight: 600; }
+      em { color: var(--ink-soft); }
+      blockquote {
+        border-left: 2px solid var(--rule);
+        padding: 4px 0 4px 18px;
+        margin: 14px 0 18px;
+        color: var(--ink-soft);
+        font-style: italic;
+      }
+
+      /* ─── Tables ─── */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 14px 0 18px;
+        font-size: 14px;
+      }
+      th, td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--rule-soft);
+        vertical-align: top;
+      }
+      th {
+        font-weight: 600;
+        font-family:
+          ui-sans-serif, system-ui,
+          "PingFang SC", "Hiragino Sans GB", sans-serif;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--ink-faint);
+        border-bottom: 1px solid var(--rule);
+      }
+      tbody tr:hover { background: rgba(0,0,0,0.015); }
+      td.num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+      }
+      td.accent { color: var(--accent); font-weight: 500; }
+
+      /* ─── Callouts ─── */
+      .callout {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 18px;
+        margin: 16px 0 20px;
+      }
+      .callout.warn {
+        border-color: #e6d4a8;
+        background: var(--warn-soft);
+      }
+      .callout.cite {
+        border-left: 2px solid var(--accent);
+        border-top: none; border-right: none; border-bottom: none;
+        background: var(--accent-faint);
+        padding-left: 22px;
+        font-style: italic;
+      }
+      .callout-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .callout.warn .callout-label { color: var(--warn); }
+      .cite-source {
+        font-style: normal;
+        font-size: 12px;
+        color: var(--ink-faint);
+        margin-top: 10px;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+      }
+
+      /* ─── Figure / Diagram ─── */
+      figure {
+        margin: 28px 0 32px;
+        border: 1px solid var(--rule);
+        background: #fff;
+      }
+      figure svg { display: block; width: 100%; height: auto; }
+      figure img { display: block; width: 100%; height: auto; }
+      figcaption {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        padding: 10px 16px;
+        border-top: 1px solid var(--rule-soft);
+        background: var(--paper-edge);
+      }
+      figcaption .fig-num {
+        color: var(--accent);
+        margin-right: 10px;
+        font-weight: 600;
+      }
+
+      /* ─── N-column concept cards ─── */
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin: 20px 0 18px;
+      }
+      .cards.cols-2 { grid-template-columns: repeat(2, 1fr); }
+      .cards.cols-4 { grid-template-columns: repeat(4, 1fr); }
+      .card {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 16px 14px;
+      }
+      .card-icon {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .card-name {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 17px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .card-where {
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-style: italic;
+        margin-bottom: 10px;
+      }
+      .card-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+
+      /* tone variants for cards */
+      .card.tone-a .card-icon { color: var(--brain); }
+      .card.tone-b .card-icon { color: var(--hands); }
+      .card.tone-c .card-icon { color: var(--session); }
+
+      /* ─── Buttons / Inputs (for interactive sections) ─── */
+      .btn {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 8px 14px;
+        background: #fff;
+        color: var(--ink);
+        border: 1px solid var(--rule);
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn:hover { background: var(--paper-edge); }
+      .btn.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .btn.primary:hover { background: #5a87a4; }
+
+      input[type="text"], input[type="email"], textarea, select {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 14px;
+        padding: 8px 12px;
+        background: #fff;
+        border: 1px solid var(--rule);
+        color: var(--ink);
+        width: 100%;
+        margin-bottom: 10px;
+      }
+      input:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      /* ─── Footer ─── */
+      footer {
+        margin-top: 80px;
+        padding-top: 24px;
+        border-top: 1px solid var(--rule);
+        font-size: 12px;
+        color: var(--ink-faint);
+      }
+      footer h4 {
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        margin-bottom: 10px;
+        color: var(--ink-soft);
+      }
+      footer ul { list-style: none; margin-left: 0; }
+      footer li { margin-bottom: 4px; }
+
+      .mascot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+
+      @media (max-width: 720px) {
+        body { padding: 32px 16px 64px; }
+        .doc-title { font-size: 26px; }
+        .cards, .cards.cols-2, .cards.cols-4 { grid-template-columns: 1fr; }
+        .doc-meta { flex-wrap: wrap; gap: 12px; }
+      }
+    
+
+      .source-note {
+        border-top: 1px solid var(--rule);
+        color: var(--ink-faint);
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        margin-top: 56px;
+        padding-top: 14px;
+        text-transform: uppercase;
+      }
+</style>
+  </head>
+  <body>
+    <article class="doc">
+      <header class="doc-header">
+        <div class="doc-eyebrow"><span class="mascot"></span>Frontend · Migrated Article</div>
+        <h1 class="doc-title">Pnpm</h1>
+        <p class="doc-subtitle">目前最佳包管理工具Pnpm！</p>
+        <div class="doc-meta">
+          <span>DATE · 2023-10-11</span>
+          <span>TAGS · Frontend, PackageManagement</span>
+          <span>SOURCE · old blog</span>
+        </div>
+      </header>
+
+      <div class="tldr">
+        <div class="tldr-label">TL;DR</div>
+        目前最佳包管理工具Pnpm！
+      </div>
+
+      <p>使用 pnpm 时，依赖会被存储在内容可寻址的存储中,不会重复安装依赖。所以pnpm安装的效率更高。</p>
+<p>相比于yarn和npm，所有包都被提升到模块目录的根目录，项目可以访问到未被添加进当前项目的依赖。pnpm则是树状的结构。如下图所示：</p>
+<p>npm:</p>
+<figure>
+  <img src="/blog/static/images/blog/202310/Pnpm/npm1.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 1</span>tu</figcaption>
+</figure>
+<p>pnpm:</p>
+<figure>
+  <img src="/blog/static/images/blog/202310/Pnpm/pnpm.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 2</span>tu</figcaption>
+</figure>
+<p>如图所示，项目安装了foo这个包，而foo依赖bar和qar，bar依赖qar。传统npm做法，所有包都被提升到模块目录的根目录，安装了foo,node_modules里面出现了三个依赖项，结构不清晰，容易出现越权访问。</p>
+<p>pnpm的node_modules只有foo这个包和.pnpm文件夹，而foo这个包实际就是一个软链接，他链接到的其实是node_modules/.pnpm/foo@1.0.0/node_modules/foo。</p>
+<p>.pnpm其实就是pnpm这个包管理器的核心，pnpm会把所有的依赖包提升到这里，每个依赖包都会有一个node_modules，在里面会有包的自己（这是一个硬链接），和其他的这个包会用到的依赖。</p>
+<p>那么依赖树的关系就是,foo包实际指向ode_modules/.pnpm/foo@1.0.0/node_modules/foo。这个包的依赖最终会寻找当前目录下的包（因为在一个同一个node_modules里），foo找到bar（这是一个软连接）,实际就会指向node_modules/.pnpm/bar@1.0.0/node_modules/bar。</p>
+<p>如此一来就会有一个比较清晰的依赖树状结构，并且依赖的路径也不会过长，并且只有真正在依赖项中的包才能访问。</p>
+<section>
+<h2><span class="num">01</span>Saving disk space</h2>
+<p>如上所说</p>
+</section>
+<section>
+<h2><span class="num">02</span>Boosting installation speed<a href="https://pnpm.io/motivation#boosting-installation-speed &quot;Direct link to Boosting installation speed&quot;">​</a></h2>
+<ol>
+  <li>Dependency resolution. All required dependencies are identified and fetched to the store.</li>
+  <li>Directory structure calculation. The <code>node_modules</code> directory structure is calculated based on the dependencies.</li>
+  <li>Linking dependencies. All remaining dependencies are fetched and hard linked from the store to <code>node_modules</code>.</li>
+</ol>
+<figure>
+  <img src="/blog/static/images/blog/202310/Pnpm/1.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 3</span>tu</figcaption>
+</figure>
+<figure>
+  <img src="/blog/static/images/blog/202310/Pnpm/2.png" alt="tu">
+  <figcaption><span class="fig-num">FIG 4</span>tu</figcaption>
+</figure>
+</section>
+<section>
+<h2><span class="num">03</span>Creating a non-flat node_modules directory</h2>
+<p>如上所说</p>
+</section>
+<section>
+<h2><span class="num">04</span>cli</h2>
+<h3>如果你想在pnpm 中强行使用npm的参数</h3>
+<ol>
+  <li>explicitly set the env variable: <code>npm_config_target_arch=x64 pnpm install</code></li>
+  <li>force the unknown option with <code>--config.</code>: <code>pnpm install --config.target_arch=x64</code></li>
+</ol>
+<h3>Options</h3>
+<p><code>-C &lt;path&gt;, --dir &lt;path&gt;</code> 指定目录运行 <code>-w, --workspace-root</code> 大仓顶层运行</p>
+<table>
+  <thead><tr><th>npm 命令</th><th>pnpm 等效命令</th></tr></thead>
+  <tbody>
+    <tr><td>npm install</td><td>pnpm install</td></tr>
+    <tr><td>npm i pkg</td><td>pnpm add pkg</td></tr>
+    <tr><td>npm run cmd</td><td>pnpm cmd</td></tr>
+  </tbody>
+</table>
+</section>
+<section>
+<h2><span class="num">05</span>Configuring</h2>
+<p>pnpm uses <a href="https://docs.npmjs.com/misc/config">npm&#39;s configuration</a> formats</p>
+<p><code>pnpm config set store-dir /path/to/.pnpm-store</code></p>
+</section>
+<section>
+<h2><span class="num">06</span>Filtering</h2>
+<p><code>pnpm --filter(or</code>-F<code>) &lt;package_selector&gt; &lt;command&gt;</code></p>
+<pre><code data-language="bash">pnpm --filter &quot;@babel/core&quot; test  
+pnpm --filter &quot;@babel/*&quot; test  
+pnpm --filter &quot;*core&quot; test
+
+pnpm --filter foo... test
+pnpm --filter &quot;@babel/preset-*...&quot; test
+pnpm --filter &quot;foo^...&quot; test
+pnpm --filter ...foo test
+pnpm --filter &quot;...^foo&quot; test
+pnpm --filter &quot;./packages/**&quot; &lt;cmd&gt;
+
+pnpm --filter ...{&lt;directory&gt;} &lt;cmd&gt;  
+pnpm --filter {&lt;directory&gt;}... &lt;cmd&gt;  
+pnpm --filter ...{&lt;directory&gt;}... &lt;cmd&gt;
+
+pnpm --filter &quot;{packages/**}[origin/master]&quot; &lt;cmd&gt;  
+pnpm --filter &quot;...{packages/**}[origin/master]&quot; &lt;cmd&gt;  
+pnpm --filter &quot;{packages/**}[origin/master]...&quot; &lt;cmd&gt;  
+pnpm --filter &quot;...{packages/**}[origin/master]...&quot; &lt;cmd&gt;
+
+pnpm --filter &quot;@babel/*{components/**}&quot; &lt;cmd&gt;  
+pnpm --filter &quot;@babel/*{components/**}[origin/master]&quot; &lt;cmd&gt;  
+pnpm --filter &quot;...@babel/*{components/**}[origin/master]&quot; &lt;cmd&gt;
+
+pnpm --filter &quot;...[origin/master]&quot; test
+
+pnpm --filter=!foo &lt;cmd&gt;
+
+pnpm --filter=!./lib &lt;cmd&gt;
+
+</code></pre>
+</section>
+<section>
+<h2><span class="num">07</span>cli command</h2>
+<blockquote> <code>pnpm add &lt;pkg&gt;</code></blockquote>
+<table>
+  <thead><tr><th>Command</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>pnpm add sax</code></td><td>Save to <code>dependencies</code></td></tr>
+    <tr><td><code>pnpm add -D sax</code></td><td>Save to <code>devDependencies</code></td></tr>
+    <tr><td><code>pnpm add -O sax</code></td><td>Save to <code>optionalDependencies</code></td></tr>
+    <tr><td><code>pnpm add -g sax</code></td><td>Install package globally</td></tr>
+    <tr><td><code>pnpm add sax@next</code></td><td>Install from the <code>next</code> tag</td></tr>
+    <tr><td><code>pnpm add sax@3.0.0</code></td><td>Specify version <code>3.0.0</code></td></tr>
+  </tbody>
+</table>
+<p>You may also install packages by:</p>
+<ul>
+  <li>tag: <code>pnpm add express@nightly</code></li>
+  <li>version: <code>pnpm add express@1.0.0</code></li>
+  <li>version range: <code>pnpm add express@2 react@&quot;&gt;=0.1.0 &lt;0.2.0&quot;</code></li>
+</ul>
+<ol>
+  <li>from a tarball file (<code>.tar</code>, <code>.tar.gz</code>, or <code>.tgz</code>)</li>
+  <li>from a directory</li>
+</ol>
+<pre><code>pnpm add ./package.tar.gz  
+pnpm add ./some-directory</code></pre>
+<p>从一个目录注册包 ，这样就有一个及时性 ，目录里内容的改变能够及时反馈，方便调试 pnpm add ./some-directory 等同于<code>pnpm link</code></p>
+<blockquote><code>pnpm install</code></blockquote>
+<p>Aliases: i</p>
+<p>安装所有项目</p>
+<blockquote><code>pnpm update</code></blockquote>
+<p>更新所有包版本 在限定范围内 ， 加参数指定某个包</p>
+<p>Aliases: <code>up</code>, <code>upgrade</code></p>
+<table>
+  <thead><tr><th>Command</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>pnpm up</code></td><td>Updates all dependencies, adhering to ranges specified in <code>package.json</code></td></tr>
+    <tr><td><code>pnpm up --latest</code></td><td>Updates all dependencies, ignoring ranges specified in <code>package.json</code></td></tr>
+    <tr><td><code>pnpm up foo@2</code></td><td>Updates <code>foo</code> to the latest version on v2</td></tr>
+    <tr><td><code>pnpm up &quot;@babel/*&quot;</code></td><td>Updates all dependencies under the <code>@babel</code> scope</td></tr>
+  </tbody>
+</table>
+<p><code>pnpm update &quot;@babel/<em>&quot;</code> <code>pnpm update &quot;\!webpack&quot; </code>pnpm update &quot;@babel/</em>&quot; &quot;\!@babel/core&quot;</p>
+<p><code>pnpm up -r --workspace express</code> todo</p>
+<blockquote><code>pnpm remove</code></blockquote>
+<p>Aliases: <code>rm</code>, <code>uninstall</code>, <code>un</code></p>
+<pre><code>### --recursive, -r
+
+When used inside a [workspace](https://pnpm.io/workspaces), removes a dependency (or dependencies) from every workspace package.
+
+When used not inside a workspace, removes a dependency (or dependencies) from every package found in subdirectories.</code></pre>
+<blockquote><code>pnpm link</code></blockquote>
+<p>Aliases: <code>ln</code></p>
+<p>使当前包在系统内、或者其他位置可以访问</p>
+<p><code>pnpm link &lt;dir&gt;</code> 如果<code>&lt;dir&gt;</code> 不传就是当前包 则链接的目标就是当前包</p>
+<p><code>pnpm link --dir ../bar</code>   --dir默认是当前工作目录, 在foo中执行 意思把当前包foo链接到目录bar中，bar/node_modules/foo</p>
+<pre><code>### `pnpm link --global` 当前项目 链入全局node_modules
+
+### `pnpm link --global &lt;pkg&gt;` 从全局吧pkg包链入当前项目</code></pre>
+<pre><code>cd ~/projects/foo
+pnpm install # install dependencies of foo
+pnpm link --global # link foo globally foo全局可用
+cd ~/projects/my-project
+pnpm link --global foo # link foo to my-project</code></pre>
+<blockquote><code>pnpm unlink</code></blockquote>
+<p>If called without arguments, all linked dependencies will be unlinked inside the current project.</p>
+<blockquote><code>pnpm import</code></blockquote>
+<p>通过其他lock生成pnpm的lock</p>
+<ul>
+  <li><code>package-lock.json</code></li>
+  <li><code>npm-shrinkwrap.json</code></li>
+  <li><code>yarn.lock</code></li>
+</ul>
+<blockquote><code>pnpm rebuild</code></blockquote>
+<p>Aliases: <code>rb</code></p>
+<p>重新构建包 -r 递归全部 -F --filter 指定</p>
+<blockquote><code>pnpm prune</code></blockquote>
+<p>移除不必要的包</p>
+<blockquote><code>pnpm fetch</code></blockquote>
+<p>Fetch packages from a lockfile into virtual store, package manifest is ignored.</p>
+<pre><code>pnpm fetch --prod
+
+pnpm install -r --offline --prod</code></pre>
+<blockquote><code>pnpm install-test</code></blockquote>
+<p>install后接pnpm test</p>
+<blockquote><code>pnpm dedupe</code></blockquote>
+<p>变更lock 移除老旧，安装新版本</p>
+<blockquote><code>pnpm patch &lt;pkg name&gt;@&lt;version&gt;</code></blockquote>
+<blockquote><code>pnpm patch-commit &lt;path&gt;</code></blockquote>
+<blockquote><code>pnpm patch-remove foo@1.0.0 bar@1.0.1</code></blockquote>
+<p>上面三个 为依赖打补丁 change</p>
+<blockquote><code>pnpm audit</code></blockquote>
+<p>检查是否有安全issues</p>
+<p><code>pnpm audit --fix</code> 自动修复</p>
+<blockquote><code>pnpm list</code></blockquote>
+<p>Aliases: <code>ls</code></p>
+<p>输出安装的依赖 -r 递归出子项目</p>
+<blockquote><code>pnpm outdated</code></blockquote>
+<p>检查过时包</p>
+<blockquote><code>pnpm run</code></blockquote>
+<p>Aliases: <code>run-script</code></p>
+<p>-r  --if-present</p>
+<blockquote><code>pnpm exec</code></blockquote>
+<p>类似npx 指定scope执行shell <code>pnpm -r exec rm -rf node_modules</code> <code>pnpm -rc exec pnpm view \$PNPM_PACKAGE_NAME</code></p>
+<blockquote><code>pnpm dlx create-react-app ./my-app</code></blockquote>
+<p>类似<code>npx create-react-app ./my-app</code> 热加载create-react-app 执行命令</p>
+<blockquote><code>pnpm create react-app my-app</code></blockquote>
+<p>创建项目</p>
+<blockquote><code>pnpm env &lt;cmd&gt;</code></blockquote>
+<p>管理node版本 注意使用改功能需要使用独立的安装脚本安装pnpm</p>
+<p><code>pnpm env use --global lts</code> <code>pnpm env use --global 16</code> <code>pnpm env add --global lts 18 20.0.1</code> 不激活 <code>pnpm env remove --global 14.0.0 16.2.3</code> <code>pnpm env list</code> 当前安装的列表 <code>pnpm env list --remote</code> 远端有哪些 <code>pnpm env list --remote 16</code></p>
+<blockquote><code>pnpm -r publish</code></blockquote>
+<p>将子项目所有包全部发布 (还没发布的)</p>
+<pre><code>### --json
+Show information in JSON format.
+
+### --tag &lt;tag&gt;
+发布相关tag 我们默认发布的tag是latest
+
+
+### --publish-branch &lt;branch&gt;
+发布分支设置 用于发布latest
+
+### --force
+强推不管版本存不存在
+
+### --report-summary
+Save the list of published packages to `pnpm-publish-summary.json`
+
+### --dry-run
+执行发布应该执行的所有操作，除了实际发布到注册中心。
+
+### --otp
+
+### --filter &lt;package_selector&gt;
+</code></pre>
+<p>Life Cycle Scripts<a href="https://pnpm.io/cli/publish#life-cycle-scripts &quot;Direct link to Life Cycle Scripts&quot;">​</a></p>
+<ul>
+  <li><code>prepublishOnly</code></li>
+  <li><code>prepublish</code></li>
+  <li><code>prepack</code></li>
+  <li><code>prepare</code></li>
+  <li><code>postpack</code></li>
+  <li><code>publish</code></li>
+  <li><code>postpublish</code></li>
+</ul>
+<blockquote><code>pnpm pack</code></blockquote>
+<p>打个gzip包</p>
+<pre><code>### --pack-destination &lt;dir&gt;[​](https://pnpm.io/cli/pack#--pack-destination-dir &quot;Direct link to --pack-destination &lt;dir&gt;&quot;)
+
+Directory in which `pnpm pack` will save tarballs. The default is the current working directory.
+
+### --pack-gzip-level &lt;level&gt;</code></pre>
+<blockquote><code>pnpm server</code></blockquote>
+<p>起一个store服务</p>
+<pre><code>### pnpm server start
+### pnpm server stop
+### pnpm server status</code></pre>
+<blockquote><code>pnpm store</code></blockquote>
+<p>管理包储存</p>
+<pre><code>### status
+
+### add
+等价于pnpm add 但是不改变项目任何文件 是直接存在store中
+
+### prune
+已出在store中未曾引用的包</code></pre>
+<blockquote><code>pnpm root</code></blockquote>
+<p>打印有效模块目录 node_modules</p>
+<p>-g</p>
+<blockquote><code>pnpm bin</code></blockquote>
+<p>-g 打印可执行文件链接到的目录 /Volumes/workspace/music-user-front/node_modules/.bin</p>
+<blockquote><code>pnpm setup</code></blockquote>
+<p>脚本安装pnpm时 顺便执行下 加path</p>
+<blockquote><code>pnpm init</code></blockquote>
+<p>创建package.json</p>
+<blockquote><code>pnpm deploy</code></blockquote>
+<p><code>pnpm --filter=&lt;deployed project name&gt; deploy &lt;target directory&gt;</code></p>
+<p><code>pnpm --filter=&lt;deployed project name&gt; --prod deploy &lt;target directory&gt;</code> --prod 跳过dev</p>
+<p>todo</p>
+<blockquote><code>pnpm config</code></blockquote>
+<p>Aliases: <code>c</code></p>
+<p>--global, -g</p>
+<pre><code>### set &lt;key&gt; &lt;value&gt;
+
+### get &lt;key&gt;
+
+### delete &lt;key&gt;
+
+### list</code></pre>
+</section>
+<section>
+<h2><span class="num">08</span>package.json</h2>
+<p><a href="https://pnpm.io/package_json">link</a></p>
+<h3>dependenciesMeta</h3>
+<pre><code data-language="json">{
+  &quot;name&quot;: &quot;card&quot;,
+  &quot;dependencies&quot;: {
+    &quot;button&quot;: &quot;workspace:1.0.0&quot;,
+    &quot;react&quot;: &quot;16&quot;
+  },
+  &quot;dependenciesMeta&quot;: {
+    &quot;button&quot;: {
+      &quot;injected&quot;: true
+    }
+  }
+}</code></pre>
+<p>常规workspace:1.0.0 会软连接当前button包 如果peer依赖依赖react是16，这时候不用injected是没问题的</p>
+<pre><code data-language="json">{
+  &quot;name&quot;: &quot;form&quot;,
+  &quot;dependencies&quot;: {
+    &quot;button&quot;: &quot;workspace:1.0.0&quot;,
+    &quot;react&quot;: &quot;17&quot;
+  },
+  &quot;dependenciesMeta&quot;: {
+    &quot;button&quot;: {
+      &quot;injected&quot;: true
+    }
+  }
+}</code></pre>
+<p>链接变为hardl link</p>
+<h3>peerDependenciesMeta</h3>
+<pre><code data-language="json">{
+    &quot;peerDependencies&quot;: {
+        &quot;foo&quot;: &quot;1&quot;
+    },
+    &quot;peerDependenciesMeta&quot;: {
+        &quot;foo&quot;: {
+            &quot;optional&quot;: true
+        },
+        &quot;bar&quot;: {
+            &quot;optional&quot;: true
+        }
+    }
+}</code></pre>
+<p>可选 指定版本 foo@1 这个这个依赖不装不会报错 , bar任意版本</p>
+<h3>publishConfig</h3>
+<ul>
+  <li><a href="https://github.com/stereobooster/package.json#bin"><code>bin</code></a></li>
+  <li><a href="https://github.com/stereobooster/package.json#main"><code>main</code></a></li>
+  <li><a href="https://nodejs.org/api/esm.html#esm_package_exports"><code>exports</code></a></li>
+  <li><a href="https://github.com/stereobooster/package.json#types"><code>types</code> or <code>typings</code></a></li>
+  <li><a href="https://github.com/stereobooster/package.json#module"><code>module</code></a></li>
+  <li><a href="https://github.com/stereobooster/package.json#browser"><code>browser</code></a></li>
+  <li><a href="https://github.com/stereobooster/package.json#esnext"><code>esnext</code></a></li>
+  <li><a href="https://github.com/stereobooster/package.json#es2015"><code>es2015</code></a></li>
+  <li><a href="https://github.com/stereobooster/package.json#unpkg-1"><code>unpkg</code></a></li>
+  <li><a href="https://github.com/stereobooster/package.json#microbundle"><code>umd:main</code></a></li>
+  <li><a href="https://www.typescriptlang.org/docs/handbook/declaration-files/publishing.html#version-selection-with-typesversions"><code>typesVersions</code></a></li>
+  <li>cpu</li>
+  <li>os</li>
+</ul>
+<p>发布时覆盖一些字段</p>
+<pre><code data-language="json">{
+    &quot;name&quot;: &quot;foo&quot;,
+    &quot;version&quot;: &quot;1.0.0&quot;,
+    &quot;main&quot;: &quot;src/index.ts&quot;,
+    &quot;publishConfig&quot;: {
+        &quot;main&quot;: &quot;lib/index.js&quot;,
+        &quot;typings&quot;: &quot;lib/index.d.ts&quot;
+    }
+}</code></pre>
+<p>结果</p>
+<pre><code data-language="json">{
+    &quot;name&quot;: &quot;foo&quot;,
+    &quot;version&quot;: &quot;1.0.0&quot;,
+    &quot;main&quot;: &quot;lib/index.js&quot;,
+    &quot;typings&quot;: &quot;lib/index.d.ts&quot;
+}</code></pre>
+</section>
+<section>
+<h2><span class="num">09</span><code>.npmrc</code></h2>
+<p><a href="https://pnpm.io/npmrc">link</a></p>
+</section>
+<section>
+<h2><span class="num">10</span><code>pnpm-workspace.yaml</code></h2>
+<pre><code data-language="yaml">packages:
+  # all packages in direct subdirs of packages/
+  - &#39;packages/*&#39;
+  # all packages in subdirs of components/
+  - &#39;components/**&#39;
+  # exclude packages that are inside test directories
+  - &#39;!**/test/**&#39;</code></pre>
+</section>
+<section>
+<h2><span class="num">11</span>.pnpmfile.cjs</h2>
+<p>一个pnpm执行安装过程会调用的hook函数</p>
+<p>与lock位置同级</p>
+<table>
+  <thead><tr><th>Hook Function</th><th>Process</th><th>Uses</th></tr></thead>
+  <tbody>
+    <tr><td><code>hooks.readPackage(pkg, context): pkg</code></td><td>Called after pnpm parses the dependency&#39;s package manifest</td><td>Allows you to mutate a dependency&#39;s <code>package.json</code></td></tr>
+    <tr><td><code>hooks.afterAllResolved(lockfile, context): lockfile</code></td><td>Called after the dependencies have been resolved.</td><td>Allows you to mutate the lockfile.</td></tr>
+  </tbody>
+</table>
+</section>
+<section>
+<h2><span class="num">12</span>Workspace</h2>
+<p>workspace must have a <a href="https://pnpm.io/pnpm-workspace_yaml"><code>pnpm-workspace.yaml</code></a></p>
+<p>正常自动link 但是要有符合的版本 在bar仓库中</p>
+<p>或者采用foo:&quot;workspace:2.0.0&quot; ，不管有没有 foo@2 都会链接，没有就error</p>
+<p>正常链接：<code>&quot;foo&quot;: &quot;workspace:<em>&quot;</code>. alias: <code>&quot;bar&quot;: &quot;workspace:foo@</em>&quot;</code>. 相对路径：<code>&quot;foo&quot;: &quot;workspace:../foo&quot;</code>.</p>
+<pre><code>{
+ &quot;dependencies&quot;: {
+  &quot;foo&quot;: &quot;workspace:*&quot;,
+  &quot;bar&quot;: &quot;workspace:~&quot;,
+  &quot;qar&quot;: &quot;workspace:^&quot;,
+  &quot;zoo&quot;: &quot;workspace:^1.5.0&quot;
+ }
+}</code></pre>
+<pre><code>{
+ &quot;dependencies&quot;: {
+  &quot;foo&quot;: &quot;1.5.0&quot;,
+  &quot;bar&quot;: &quot;~1.5.0&quot;,
+  &quot;qar&quot;: &quot;^1.5.0&quot;,
+  &quot;zoo&quot;: &quot;^1.5.0&quot;
+ }
+}</code></pre>
+<blockquote><code>pnpm add lodash@npm:awesome-lodash</code></blockquote>
+<p>这样所有引入lodash的地方其实引入的包是<code>awesome-lodash</code></p>
+<pre><code>pnpm add lodash1@npm:lodash@1
+pnpm add lodash2@npm:lodash@2</code></pre>
+<p>想用两个版本的lodash</p>
+</section>
+<section>
+<h2><span class="num">13</span>tab补齐</h2>
+<pre><code>pnpm install-completion
+pnpm install-completion zsh</code></pre>
+<p>建议不要使用 workspace -F 后面路径tab不出来</p>
+</section>
+<section>
+<h2><span class="num">14</span>lock分支区分 最后统一合并处理</h2>
+<p>You can turn on this feature by configuring the <code>.npmrc</code> file.</p>
+<pre><code>git-branch-lockfile=true</code></pre>
+<pre><code>- &lt;project_folder&gt;
+|- pnpm-lock.yaml
+|- pnpm-lock.feature-1.yaml
+|- pnpm-lock.&lt;branch_name&gt;.yaml</code></pre>
+<h3><code>pnpm install --merge-git-branch-lockfiles</code></h3>
+</section>
+
+      <div class="source-note">Migrated from data/blog/202310/Pnpm.md</div>
+    </article>
+  </body>
+</html>

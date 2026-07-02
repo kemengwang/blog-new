@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RustLearningAndSummary</title>
+    <meta name="description" content="这是对Rust的总结与学习，会持续更新，（努力)📖" />
+    <style>
+      :root {
+        --paper: #f7f7f5;
+        --paper-edge: #efefea;
+        --ink: #1a1a1a;
+        --ink-soft: #4a4a4a;
+        --ink-faint: #7a7a7a;
+        --rule: #d8d8d2;
+        --rule-soft: #e8e8e2;
+        --accent: #6f9bb8;
+        --accent-soft: #d9e6f0;
+        --accent-faint: #eef4f8;
+        --warn: #b88a4a;
+        --warn-soft: #f5ecdc;
+        --danger: #a05050;
+        --code-bg: #ececea;
+
+        /* Semantic palette for three-layer cards. Rename freely
+           (e.g. --layer-a / --layer-b / --layer-c) when the three
+           layers in the doc are not brain/hands/session. */
+        --brain: #6f9bb8;
+        --brain-bg: #eef4f8;
+        --hands: #b88a4a;
+        --hands-bg: #f5ecdc;
+        --session: #6b7560;
+        --session-bg: #ecede5;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { font-size: 16px; }
+
+      /* Font stacks include both English serifs/monospace and CJK
+         fallbacks so the same template renders cleanly for English
+         or Chinese source content. */
+      body {
+        font-family:
+          ui-serif, "Charter", "Iowan Old Style", "Source Serif Pro", Georgia,
+          "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+        background: var(--paper);
+        color: var(--ink);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        padding: 64px 24px 96px;
+      }
+
+      .doc { max-width: 840px; margin: 0 auto; }
+
+      /* ─── Header ─── */
+      .doc-header {
+        border-bottom: 1px solid var(--rule);
+        padding-bottom: 28px;
+        margin-bottom: 48px;
+      }
+      .doc-eyebrow {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 14px;
+      }
+      .doc-title {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 34px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+      }
+      .doc-subtitle {
+        font-size: 16px;
+        color: var(--ink-soft);
+        margin-top: 10px;
+        font-style: italic;
+      }
+      .doc-meta {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        color: var(--ink-faint);
+        margin-top: 18px;
+        display: flex;
+        gap: 24px;
+      }
+
+      /* ─── TL;DR ─── */
+      .tldr {
+        background: var(--accent-faint);
+        border-left: 2px solid var(--accent);
+        padding: 20px 24px;
+        margin-bottom: 56px;
+        font-size: 15px;
+      }
+      .tldr-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      /* ─── Sections ─── */
+      section { margin-bottom: 56px; }
+      h2 {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.005em;
+        margin-bottom: 18px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--rule);
+      }
+      h2 .num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-weight: 500;
+        margin-right: 14px;
+        letter-spacing: 0.05em;
+      }
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 28px 0 10px;
+      }
+      h4 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 22px 0 8px;
+      }
+      p { margin-bottom: 14px; }
+      p + p { margin-top: -2px; }
+      a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+      a:hover { border-bottom-color: var(--accent); }
+      code {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+        background: var(--code-bg);
+        padding: 1px 5px;
+        border-radius: 2px;
+      }
+      pre {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12.5px;
+        line-height: 1.55;
+        background: var(--code-bg);
+        padding: 14px 18px;
+        margin: 14px 0 18px;
+        overflow-x: auto;
+        border-left: 2px solid var(--rule);
+      }
+      pre code { background: transparent; padding: 0; }
+      ul, ol { margin: 8px 0 16px 22px; }
+      li { margin-bottom: 6px; }
+      strong { font-weight: 600; }
+      em { color: var(--ink-soft); }
+      blockquote {
+        border-left: 2px solid var(--rule);
+        padding: 4px 0 4px 18px;
+        margin: 14px 0 18px;
+        color: var(--ink-soft);
+        font-style: italic;
+      }
+
+      /* ─── Tables ─── */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 14px 0 18px;
+        font-size: 14px;
+      }
+      th, td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--rule-soft);
+        vertical-align: top;
+      }
+      th {
+        font-weight: 600;
+        font-family:
+          ui-sans-serif, system-ui,
+          "PingFang SC", "Hiragino Sans GB", sans-serif;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--ink-faint);
+        border-bottom: 1px solid var(--rule);
+      }
+      tbody tr:hover { background: rgba(0,0,0,0.015); }
+      td.num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+      }
+      td.accent { color: var(--accent); font-weight: 500; }
+
+      /* ─── Callouts ─── */
+      .callout {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 18px;
+        margin: 16px 0 20px;
+      }
+      .callout.warn {
+        border-color: #e6d4a8;
+        background: var(--warn-soft);
+      }
+      .callout.cite {
+        border-left: 2px solid var(--accent);
+        border-top: none; border-right: none; border-bottom: none;
+        background: var(--accent-faint);
+        padding-left: 22px;
+        font-style: italic;
+      }
+      .callout-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .callout.warn .callout-label { color: var(--warn); }
+      .cite-source {
+        font-style: normal;
+        font-size: 12px;
+        color: var(--ink-faint);
+        margin-top: 10px;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+      }
+
+      /* ─── Figure / Diagram ─── */
+      figure {
+        margin: 28px 0 32px;
+        border: 1px solid var(--rule);
+        background: #fff;
+      }
+      figure svg { display: block; width: 100%; height: auto; }
+      figure img { display: block; width: 100%; height: auto; }
+      figcaption {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        padding: 10px 16px;
+        border-top: 1px solid var(--rule-soft);
+        background: var(--paper-edge);
+      }
+      figcaption .fig-num {
+        color: var(--accent);
+        margin-right: 10px;
+        font-weight: 600;
+      }
+
+      /* ─── N-column concept cards ─── */
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin: 20px 0 18px;
+      }
+      .cards.cols-2 { grid-template-columns: repeat(2, 1fr); }
+      .cards.cols-4 { grid-template-columns: repeat(4, 1fr); }
+      .card {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 16px 14px;
+      }
+      .card-icon {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .card-name {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 17px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .card-where {
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-style: italic;
+        margin-bottom: 10px;
+      }
+      .card-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+
+      /* tone variants for cards */
+      .card.tone-a .card-icon { color: var(--brain); }
+      .card.tone-b .card-icon { color: var(--hands); }
+      .card.tone-c .card-icon { color: var(--session); }
+
+      /* ─── Buttons / Inputs (for interactive sections) ─── */
+      .btn {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 8px 14px;
+        background: #fff;
+        color: var(--ink);
+        border: 1px solid var(--rule);
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn:hover { background: var(--paper-edge); }
+      .btn.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .btn.primary:hover { background: #5a87a4; }
+
+      input[type="text"], input[type="email"], textarea, select {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 14px;
+        padding: 8px 12px;
+        background: #fff;
+        border: 1px solid var(--rule);
+        color: var(--ink);
+        width: 100%;
+        margin-bottom: 10px;
+      }
+      input:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      /* ─── Footer ─── */
+      footer {
+        margin-top: 80px;
+        padding-top: 24px;
+        border-top: 1px solid var(--rule);
+        font-size: 12px;
+        color: var(--ink-faint);
+      }
+      footer h4 {
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        margin-bottom: 10px;
+        color: var(--ink-soft);
+      }
+      footer ul { list-style: none; margin-left: 0; }
+      footer li { margin-bottom: 4px; }
+
+      .mascot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+
+      @media (max-width: 720px) {
+        body { padding: 32px 16px 64px; }
+        .doc-title { font-size: 26px; }
+        .cards, .cards.cols-2, .cards.cols-4 { grid-template-columns: 1fr; }
+        .doc-meta { flex-wrap: wrap; gap: 12px; }
+      }
+    
+
+      .source-note {
+        border-top: 1px solid var(--rule);
+        color: var(--ink-faint);
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        margin-top: 56px;
+        padding-top: 14px;
+        text-transform: uppercase;
+      }
+</style>
+  </head>
+  <body>
+    <article class="doc">
+      <header class="doc-header">
+        <div class="doc-eyebrow"><span class="mascot"></span>Rust · Migrated Article</div>
+        <h1 class="doc-title">RustLearningAndSummary</h1>
+        <p class="doc-subtitle">这是对Rust的总结与学习，会持续更新，（努力)📖</p>
+        <div class="doc-meta">
+          <span>DATE · 2024-06-12</span>
+          <span>TAGS · Rust</span>
+          <span>SOURCE · old blog</span>
+        </div>
+      </header>
+
+      <div class="tldr">
+        <div class="tldr-label">TL;DR</div>
+        这是对Rust的总结与学习，会持续更新，（努力)📖
+      </div>
+
+      <section>
+<h2><span class="num">01</span>一、变量常量</h2>
+<p>let a = 1 变量定义 let mut a = 1 可变变量 const MAX_AA = 100 常量 let \_a = 100  使用下划线开头忽略未使用的变量 let (a, mut b): (bool,bool) = (true, false); 解构</p>
+</section>
+<section>
+<h2><span class="num">02</span>二、 泛型和特征</h2>
+<h3>A、泛型</h3>
+<p>根据定义 传参  来约定声明的<code>&lt;T&gt;</code> 是啥类型</p>
+<p>编译时的产物 无性能消耗</p>
+<h4>1.各种场景</h4>
+<h5>函数使用泛型 函数名后进行声明</h5>
+<pre><code data-language="rust">fn add&lt;T&gt;(a:T, b:T) -&gt; T { a }</code></pre>
+<p>未确定类型不能相加 （除非限定特征）</p>
+<h5>结构体中使用</h5>
+<pre><code data-language="rust">struct Point&lt;T&gt; {
+    x: T,
+    y: T,
+}
+
+fn main() {
+    let integer = Point { x: 5, y: 10 };
+    let float = Point { x: 1.0, y: 4.0 };
+}</code></pre>
+<h5>枚举中</h5>
+<pre><code data-language="rust">enum Option&lt;T&gt; {
+    Some(T),
+    None,
+}</code></pre>
+<h5>方法中</h5>
+<p><code>impl&lt;T&gt;</code> 声明T   <code>Point&lt;T&gt;</code> 实际就是完整的类型 前面声明T传给了它 还能给方法函数用 <code>&lt;V, W&gt;</code> 和T不冲突</p>
+<pre><code data-language="rust">struct Point&lt;T&gt; {
+    x: T,
+    y: T,
+}
+
+impl&lt;T&gt; Point&lt;T&gt; {
+    fn x&lt;V, W&gt;(&amp;self) -&gt; &amp;T {
+        &amp;self.x
+    }
+}
+
+fn main() {
+    let p = Point { x: 5, y: 10 };
+
+    println!(&quot;p.x = {}&quot;, p.x());
+}</code></pre>
+<h4>2.const泛型</h4>
+<p>值类型 数组的长度 N 是一个值  。 定义的泛型前加const</p>
+<pre><code data-language="rust">fn display_array&lt;T: std::fmt::Debug, const N: usize&gt;(arr: [T; N]) {
+    println!(&quot;{:?}&quot;, arr);
+}
+fn main() {
+    let arr: [i32; 3] = [1, 2, 3];
+    display_array(arr);
+
+    let arr: [i32; 2] = [1, 2];
+    display_array(arr);
+}</code></pre>
+<h3>B、特征</h3>
+<p>一种行为的抽象</p>
+<p>特征定义了<strong>一组可以被共享的行为，只要实现了特征，你就能使用这组行为</strong></p>
+<h4>1.定义</h4>
+<p>不同类型 具有相同行为 为此我们可以定义一个特征，为这些类型实现这些行为</p>
+<p><strong>定义特征</strong>是把一些方法组合在一起，目的是定义一个实现某些目标所必需的行为的集合。</p>
+<pre><code data-language="rust">trait Summary {
+    fn summarize(&amp;self) -&gt; String;
+}</code></pre>
+<p>关键字：trait</p>
+<p>特征可以定义行为看起来的样子  也可以提供默认实现</p>
+<h4>2.实现</h4>
+<h5>实现</h5>
+<p>impl Summary for Post 为Post实现Summary特征</p>
+<pre><code data-language="rust">pub trait Summary {
+    fn summarize(&amp;self) -&gt; String;
+}
+pub struct Post {
+    pub title: String, // 标题
+    pub author: String, // 作者
+    pub content: String, // 内容
+}
+
+impl Summary for Post {
+    fn summarize(&amp;self) -&gt; String {
+        format!(&quot;文章{}, 作者是{}&quot;, self.title, self.author)
+    }
+}
+
+pub struct Weibo {
+    pub username: String,
+    pub content: String
+}
+
+impl Summary for Weibo {
+    fn summarize(&amp;self) -&gt; String {
+        format!(&quot;{}发表了微博{}&quot;, self.username, self.content)
+    }
+}</code></pre>
+<h5>默认实现、重载</h5>
+<pre><code data-language="rust">pub trait Summary {
+    fn summarize(&amp;self) -&gt; String {
+        String::from(&quot;(Read more...)&quot;)
+    }
+}
+
+// 使用默认实现
+impl Summary for Post {}
+
+#[derive(Debug)] 特征派生 给下面的类型 使用默认实现
+struct AA()
+
+// 重载
+impl Summary for Weibo {
+    fn summarize(&amp;self) -&gt; String {
+        format!(&quot;{}发表了微博{}&quot;, self.username, self.content)
+    }
+}</code></pre>
+<h5>特征组合</h5>
+<p>实现特征中某个方法 便可使用其他所有方法</p>
+<pre><code data-language="rust">pub trait Summary {
+    fn summarize_author(&amp;self) -&gt; String;
+
+    fn summarize(&amp;self) -&gt; String {
+        format!(&quot;(Read more from {}...)&quot;, self.summarize_author())
+    }
+}
+
+
+impl Summary for Weibo {
+    fn summarize_author(&amp;self) -&gt; String {
+        format!(&quot;@{}&quot;, self.username)
+    }
+}
+println!(&quot;1 new weibo: {}&quot;, weibo.summarize());
+</code></pre>
+<p>实现了summarize_author ，我可以调用summarize</p>
+<h4>3.孤儿原则</h4>
+<p>为某个类型实现某个特征  那么类型 或者 特征 至少有一个是定义在当前作用域</p>
+<h4>4.特征约束</h4>
+<pre><code data-language="rust">pub fn notify&lt;T: Summary&gt;(item: &amp;T) {
+    println!(&quot;Breaking news! {}&quot;, item.summarize());
+}
+
+// 多重约束
+pub fn notify&lt;T: Summary + Display&gt;(item: &amp;T) {
+    println!(&quot;Breaking news! {}&quot;, item.summarize());
+}</code></pre>
+<p>对泛型进行约束   传入的类型必须具有该特征</p>
+<p>可以使用语法糖</p>
+<pre><code data-language="rust">pub fn notify(item: &amp;impl Summary) {
+    println!(&quot;Breaking news! {}&quot;, item.summarize());
+}
+
+pub fn notify(item: &amp;(impl Summary + Display)) {}
+
+
+// 注意 返回的类型 不能是多种 如下 只返回了Weibo类型 (多种需要使用特征对象)
+fn returns_summarizable() -&gt; impl Summary {
+    Weibo {
+        username: String::from(&quot;sunface&quot;),
+        content: String::from(
+            &quot;m1 max太厉害了，电脑再也不会卡&quot;,
+        )
+    }
+}
+</code></pre>
+<p><code>impl Summary</code> 类似一种特征类型</p>
+<h5>where约束</h5>
+<pre><code data-language="rust">fn some_function&lt;T: Display + Clone, U: Clone + Debug&gt;(t: &amp;T, u: &amp;U) -&gt; i32 {}
+
+// 使用where提升可读性
+fn some_function&lt;T, U&gt;(t: &amp;T, u: &amp;U) -&gt; i32
+    where T: Display + Clone,
+          U: Clone + Debug
+{}</code></pre>
+<h5>方法中使用</h5>
+<pre><code data-language="rust">use std::fmt::Display;
+
+struct Pair&lt;T&gt; {
+    x: T,
+    y: T,
+}
+
+impl&lt;T&gt; Pair&lt;T&gt; {
+    fn new(x: T, y: T) -&gt; Self {
+        Self {
+            x,
+            y,
+        }
+    }
+}
+// 和上面的Pair方法同时存在 但是对传入的参数有约束 所以不同
+impl&lt;T: Display + PartialOrd&gt; Pair&lt;T&gt; {
+    fn cmp_display(&amp;self) {
+        if self.x &gt;= self.y {
+            println!(&quot;The largest member is x = {}&quot;, self.x);
+        } else {
+            println!(&quot;The largest member is y = {}&quot;, self.y);
+        }
+    }
+}</code></pre>
+<h4>5. 调用特征方法需要引入特征</h4>
+<p>最常用的标准库中的特征通过 <a href="https://course.rs/appendix/prelude.html"><code>std::prelude</code></a> 模块提前引入到了当前作用域</p>
+<pre><code data-language="rust">use std::convert::TryInto; //可以删除 在prelude里
+
+fn main() {
+  let a: i32 = 10;
+  let b: u16 = 100;
+
+  let b_ = b.try_into()
+            .unwrap();
+
+  if a &lt; b_ {
+    println!(&quot;Ten is less than one hundred.&quot;);
+  }
+}</code></pre>
+<h4>6. 特征对象</h4>
+<p>类型定义：<code>Box&lt;dyn Draw&gt;</code> / <code>&amp;dyn Draw</code></p>
+<p>依赖隐式转换 (发生条件Deref有讲):</p>
+<p>常规隐式转换&amp;  特征对象特殊box包裹也可  draw1传入<code>Box&lt;T&gt;</code> 转换为<code>Box&lt;dyn Draw&gt;</code> draw2传入 <code>&amp;T</code> 转换为 <code>&amp;dyn Draw</code>     (假设T的特征为Draw)</p>
+<pre><code data-language="rust">...
+
+fn draw1(x: Box&lt;dyn Draw&gt;) {
+    x.draw();
+}
+
+fn draw2(x: &amp;dyn Draw) {
+    x.draw();
+}
+
+fn main() {
+    let x = 1.1f64;
+    let y = 8u8;
+
+    draw1(Box::new(x));
+    draw1(Box::new(y));
+    draw2(&amp;x);
+    draw2(&amp;y);
+}</code></pre>
+<h4>7.关联类型</h4>
+<p>与反型相比 有更好的可读性</p>
+<pre><code data-language="rust">pub trait Iterator {
+    type Item;
+
+    fn next(&amp;mut self) -&gt; Option&lt;Self::Item&gt;;
+}
+</code></pre>
+</section>
+<section>
+<h2><span class="num">03</span>三、Deref</h2>
+<ol>
+  <li>使用* 解引用时 如果目标是智能指针则会调用其deref方法，注意只会调用一次</li>
+  <li>当带有借用时 有可会发生隐式转换 即返回智能指针指向的值的引用（或者说引用指向的值的引用）</li>
+</ol>
+<pre><code data-language="rust">&amp;&amp;a -&gt; &amp;a
+
+&amp;Box(String(a)) -&gt; &amp;String(a) -&gt; &amp;a</code></pre>
+<p>常见隐式转换发生在方法调用 函数调用  定义变量时指定借用类型 赋予时可以发生</p>
+</section>
+
+      <div class="source-note">Migrated from data/blog/202406/RustLearningAndSummary.md</div>
+    </article>
+  </body>
+</html>

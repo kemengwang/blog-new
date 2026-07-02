@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>package.json</title>
+    <meta name="description" content="前端package.json简述，很早之前就知道是啥，这里总结下，持续更新～" />
+    <style>
+      :root {
+        --paper: #f7f7f5;
+        --paper-edge: #efefea;
+        --ink: #1a1a1a;
+        --ink-soft: #4a4a4a;
+        --ink-faint: #7a7a7a;
+        --rule: #d8d8d2;
+        --rule-soft: #e8e8e2;
+        --accent: #6f9bb8;
+        --accent-soft: #d9e6f0;
+        --accent-faint: #eef4f8;
+        --warn: #b88a4a;
+        --warn-soft: #f5ecdc;
+        --danger: #a05050;
+        --code-bg: #ececea;
+
+        /* Semantic palette for three-layer cards. Rename freely
+           (e.g. --layer-a / --layer-b / --layer-c) when the three
+           layers in the doc are not brain/hands/session. */
+        --brain: #6f9bb8;
+        --brain-bg: #eef4f8;
+        --hands: #b88a4a;
+        --hands-bg: #f5ecdc;
+        --session: #6b7560;
+        --session-bg: #ecede5;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { font-size: 16px; }
+
+      /* Font stacks include both English serifs/monospace and CJK
+         fallbacks so the same template renders cleanly for English
+         or Chinese source content. */
+      body {
+        font-family:
+          ui-serif, "Charter", "Iowan Old Style", "Source Serif Pro", Georgia,
+          "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+        background: var(--paper);
+        color: var(--ink);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        padding: 64px 24px 96px;
+      }
+
+      .doc { max-width: 840px; margin: 0 auto; }
+
+      /* ─── Header ─── */
+      .doc-header {
+        border-bottom: 1px solid var(--rule);
+        padding-bottom: 28px;
+        margin-bottom: 48px;
+      }
+      .doc-eyebrow {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 14px;
+      }
+      .doc-title {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 34px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+      }
+      .doc-subtitle {
+        font-size: 16px;
+        color: var(--ink-soft);
+        margin-top: 10px;
+        font-style: italic;
+      }
+      .doc-meta {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        color: var(--ink-faint);
+        margin-top: 18px;
+        display: flex;
+        gap: 24px;
+      }
+
+      /* ─── TL;DR ─── */
+      .tldr {
+        background: var(--accent-faint);
+        border-left: 2px solid var(--accent);
+        padding: 20px 24px;
+        margin-bottom: 56px;
+        font-size: 15px;
+      }
+      .tldr-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      /* ─── Sections ─── */
+      section { margin-bottom: 56px; }
+      h2 {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.005em;
+        margin-bottom: 18px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--rule);
+      }
+      h2 .num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-weight: 500;
+        margin-right: 14px;
+        letter-spacing: 0.05em;
+      }
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 28px 0 10px;
+      }
+      h4 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 22px 0 8px;
+      }
+      p { margin-bottom: 14px; }
+      p + p { margin-top: -2px; }
+      a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+      a:hover { border-bottom-color: var(--accent); }
+      code {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+        background: var(--code-bg);
+        padding: 1px 5px;
+        border-radius: 2px;
+      }
+      pre {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12.5px;
+        line-height: 1.55;
+        background: var(--code-bg);
+        padding: 14px 18px;
+        margin: 14px 0 18px;
+        overflow-x: auto;
+        border-left: 2px solid var(--rule);
+      }
+      pre code { background: transparent; padding: 0; }
+      ul, ol { margin: 8px 0 16px 22px; }
+      li { margin-bottom: 6px; }
+      strong { font-weight: 600; }
+      em { color: var(--ink-soft); }
+      blockquote {
+        border-left: 2px solid var(--rule);
+        padding: 4px 0 4px 18px;
+        margin: 14px 0 18px;
+        color: var(--ink-soft);
+        font-style: italic;
+      }
+
+      /* ─── Tables ─── */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 14px 0 18px;
+        font-size: 14px;
+      }
+      th, td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--rule-soft);
+        vertical-align: top;
+      }
+      th {
+        font-weight: 600;
+        font-family:
+          ui-sans-serif, system-ui,
+          "PingFang SC", "Hiragino Sans GB", sans-serif;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--ink-faint);
+        border-bottom: 1px solid var(--rule);
+      }
+      tbody tr:hover { background: rgba(0,0,0,0.015); }
+      td.num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+      }
+      td.accent { color: var(--accent); font-weight: 500; }
+
+      /* ─── Callouts ─── */
+      .callout {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 18px;
+        margin: 16px 0 20px;
+      }
+      .callout.warn {
+        border-color: #e6d4a8;
+        background: var(--warn-soft);
+      }
+      .callout.cite {
+        border-left: 2px solid var(--accent);
+        border-top: none; border-right: none; border-bottom: none;
+        background: var(--accent-faint);
+        padding-left: 22px;
+        font-style: italic;
+      }
+      .callout-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .callout.warn .callout-label { color: var(--warn); }
+      .cite-source {
+        font-style: normal;
+        font-size: 12px;
+        color: var(--ink-faint);
+        margin-top: 10px;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+      }
+
+      /* ─── Figure / Diagram ─── */
+      figure {
+        margin: 28px 0 32px;
+        border: 1px solid var(--rule);
+        background: #fff;
+      }
+      figure svg { display: block; width: 100%; height: auto; }
+      figure img { display: block; width: 100%; height: auto; }
+      figcaption {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        padding: 10px 16px;
+        border-top: 1px solid var(--rule-soft);
+        background: var(--paper-edge);
+      }
+      figcaption .fig-num {
+        color: var(--accent);
+        margin-right: 10px;
+        font-weight: 600;
+      }
+
+      /* ─── N-column concept cards ─── */
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin: 20px 0 18px;
+      }
+      .cards.cols-2 { grid-template-columns: repeat(2, 1fr); }
+      .cards.cols-4 { grid-template-columns: repeat(4, 1fr); }
+      .card {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 16px 14px;
+      }
+      .card-icon {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .card-name {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 17px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .card-where {
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-style: italic;
+        margin-bottom: 10px;
+      }
+      .card-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+
+      /* tone variants for cards */
+      .card.tone-a .card-icon { color: var(--brain); }
+      .card.tone-b .card-icon { color: var(--hands); }
+      .card.tone-c .card-icon { color: var(--session); }
+
+      /* ─── Buttons / Inputs (for interactive sections) ─── */
+      .btn {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 8px 14px;
+        background: #fff;
+        color: var(--ink);
+        border: 1px solid var(--rule);
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn:hover { background: var(--paper-edge); }
+      .btn.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .btn.primary:hover { background: #5a87a4; }
+
+      input[type="text"], input[type="email"], textarea, select {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 14px;
+        padding: 8px 12px;
+        background: #fff;
+        border: 1px solid var(--rule);
+        color: var(--ink);
+        width: 100%;
+        margin-bottom: 10px;
+      }
+      input:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      /* ─── Footer ─── */
+      footer {
+        margin-top: 80px;
+        padding-top: 24px;
+        border-top: 1px solid var(--rule);
+        font-size: 12px;
+        color: var(--ink-faint);
+      }
+      footer h4 {
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        margin-bottom: 10px;
+        color: var(--ink-soft);
+      }
+      footer ul { list-style: none; margin-left: 0; }
+      footer li { margin-bottom: 4px; }
+
+      .mascot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+
+      @media (max-width: 720px) {
+        body { padding: 32px 16px 64px; }
+        .doc-title { font-size: 26px; }
+        .cards, .cards.cols-2, .cards.cols-4 { grid-template-columns: 1fr; }
+        .doc-meta { flex-wrap: wrap; gap: 12px; }
+      }
+    
+
+      .source-note {
+        border-top: 1px solid var(--rule);
+        color: var(--ink-faint);
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        margin-top: 56px;
+        padding-top: 14px;
+        text-transform: uppercase;
+      }
+</style>
+  </head>
+  <body>
+    <article class="doc">
+      <header class="doc-header">
+        <div class="doc-eyebrow"><span class="mascot"></span>Nodejs · Migrated Article</div>
+        <h1 class="doc-title">package.json</h1>
+        <p class="doc-subtitle">前端package.json简述，很早之前就知道是啥，这里总结下，持续更新～</p>
+        <div class="doc-meta">
+          <span>DATE · 2023-01-03</span>
+          <span>TAGS · Nodejs, Backend, Server, Frontend, PackageManagement, Pack</span>
+          <span>SOURCE · old blog</span>
+        </div>
+      </header>
+
+      <div class="tldr">
+        <div class="tldr-label">TL;DR</div>
+        前端package.json简述，很早之前就知道是啥，这里总结下，持续更新～
+      </div>
+
+      <section>
+<h2><span class="num">01</span>1. 文件配置</h2>
+<p>包括项目所包含的文件，以及入口等信息。</p>
+<h3>files</h3>
+<p>项目在进行 npm 发布时，可以通过 files 指定需要跟随一起发布的内容来控制 npm 包的大小，避免安装时间太长。</p>
+<p>发布时默认会包括 package.json，license，README 和<code>main</code> 字段里指定的文件。忽略 node_modules，lockfile 等文件。</p>
+<p>在此基础上，我们可以指定更多需要一起发布的内容。可以是单独的文件，整个文件夹，或者使用通配符匹配到的文件。</p>
+<pre><code data-language="json">&quot;files&quot;: [
+  &quot;filename.js&quot;,
+  &quot;directory/&quot;,
+  &quot;glob/*.{js,json}&quot;
+ ]</code></pre>
+<p>一般情况下，files 里会指定构建出来的产物以及类型文件，而 src，test 等目录下的文件不需要跟随发布。</p>
+<h3>type</h3>
+<p>在 node 支持 ES 模块后，要求 ES 模块采用 <code>.mjs</code> 后缀文件名。只要遇到 <code>.mjs</code> 文件，就认为它是 ES 模块。如果不想修改文件后缀，就可以在 package.json文件中，指定 type 字段为 module。</p>
+<pre><code data-language="json">&quot;type&quot;: &quot;module&quot;</code></pre>
+<p>这样所有 <code>.js</code> 后缀的文件，node 都会用 ES 模块解释。</p>
+<ul>
+  <li><strong>注意如果没有上述的两个条件，nodejs默认执行都是commonjs，即便是你用import引入某个js</strong></li>
+</ul>
+<pre><code data-language="bash"># 使用 ES 模块规范
+$ node index.mjs</code></pre>
+<p>如果还要使用 CommonJS 模块规范，那么需要将 CommonJS 脚本的后缀名都改成<code>.cjs</code>，不过两种模块规范最好不要混用，会产生异常报错。</p>
+<h3>main</h3>
+<p>项目发布时，默认会包括 package.json，license，README 和<code>main</code> 字段里指定的文件，因为 main 字段里指定的是项目的入口文件，在 browser 和 Node 环境中都可以使用。</p>
+<p>如果不设置 <code>main</code> 字段，那么入口文件就是根目录下的 <code>index.js</code>。</p>
+<p>比如 packageA 的 <code>main</code> 字段指定为 index.js。</p>
+<pre><code data-language="json">&quot;main&quot;: &quot;./index.js&quot;</code></pre>
+<p>我们引入 packageA 时，实际上引入的就是 <code>node_modules/packageA/index.js</code>。</p>
+<p>这是早期只有 CommonJS 模块规范时，指定项目入口的唯一属性。</p>
+<h3>browser</h3>
+<p>main 字段里指定的入口文件在 browser 和 Node 环境中都可以使用。如果只想在 web 端使用，不允许在 server 端使用，可以通过 browser 字段指定入口。</p>
+<pre><code data-language="json">&quot;browser&quot;: &quot;./browser/index.js&quot;</code></pre>
+<h3>module</h3>
+<p>同样，项目也可以指定 ES 模块的入口文件，这就是 module 字段的作用。</p>
+<pre><code data-language="json">&quot;module&quot;: &quot;./index.mjs&quot;</code></pre>
+<p>当一个项目同时定义了 main，browser 和 module，像 webpack，rollup 等构建工具会感知这些字段，并会根据环境以及不同的模块规范来进行不同的入口文件查找。</p>
+<pre><code data-language="json">&quot;main&quot;: &quot;./index.js&quot;, 
+&quot;browser&quot;: &quot;./browser/index.js&quot;,
+&quot;module&quot;: &quot;./index.mjs&quot;</code></pre>
+<p>比如 webpack 构建项目时默认的 target 为 <code>&#39;web&#39;</code>，也就是 Web 构建。它的 resolve.mainFeilds 字段默认为 [&#39;browser&#39;, &#39;module&#39;, &#39;main&#39;]。</p>
+<pre><code data-language="js">module.exports = {
+  //...
+  resolve: {
+    mainFields: [&#39;browser&#39;, &#39;module&#39;, &#39;main&#39;],
+  },
+};</code></pre>
+<p>此时会按照 browser -&gt; module -&gt; main 的顺序来查找入口文件。</p>
+<p><strong>常见错误</strong>：由于打包构建工具 不管mjs还是js,对于es指定的入口，会按照es标准解析，但是如果在ssr环境下，没有加mjs结尾，node执行es代码会直接报错！（不满足上述两个条件都不会按照es执行），推荐node下使用<strong>exports字段</strong>,其他字段适用于打包</p>
+<h3>exports</h3>
+<p>node 在 14.13 支持在 package.json 里定义 exports 字段，拥有了条件导出的功能。</p>
+<p>exports 字段可以配置不同环境对应的模块入口文件，并且当它存在时，它的优先级最高。</p>
+<p>比如使用 <code>require</code> 和 <code>import</code> 字段根据模块规范分别定义入口：</p>
+<pre><code data-language="json">&quot;exports&quot;: {
+  &quot;require&quot;: &quot;./index.js&quot;,
+  &quot;import&quot;: &quot;./index.mjs&quot;
+ }</code></pre>
+<p>这样的配置在使用 <code>import &#39;xxx&#39;</code> 和 <code>require(&#39;xxx&#39;)</code> 时会从不同的入口引入文件，exports 也支持使用 <code>browser</code> 和 <code>node</code> 字段定义 browser 和 Node 环境中的入口。</p>
+<p>上方的写法其实等同于：</p>
+<pre><code data-language="json">&quot;exports&quot;: {
+  &quot;.&quot;: {
+    &quot;require&quot;: &quot;./index.js&quot;,
+    &quot;import&quot;: &quot;./index.mjs&quot;
+  }
+ }</code></pre>
+<p>为什么要加一个层级，把 require 和 import 放在 <code>&quot;.&quot;</code> 下面呢？</p>
+<p>因为 exports 除了支持配置包的默认导出，还支持配置包的子路径。</p>
+<p>比如一些第三方 UI 包需要引入对应的样式文件才能正常使用。</p>
+<pre><code data-language="json">import `packageA/dist/css/index.css`;</code></pre>
+<p>我们可以使用 exports 来封装文件路径：</p>
+<pre><code data-language="json">&quot;exports&quot;: {
+  &quot;./style&quot;: &quot;./dist/css/index.css&#39;
+}</code></pre>
+<p>用户引入时只需：</p>
+<pre><code data-language="js">import `packageA/style`;</code></pre>
+<p>除了对导出的文件路径进行封装，exports 还限制了使用者不可以访问未在 &quot;exports&quot; 中定义的任何其他路径。</p>
+<p>比如发布的 dist 文件里有一些内部模块 <code>dist/internal/module</code> ，被用户单独引入使用的话可能会导致主模块不可用。为了限制外部的使用，我们可以不在 exports 定义这些模块的路径，这样外部引入 <code>packageA/dist/internal/module</code> 模块的话就会报错。</p>
+<p>结合上面入口文件配置的知识，再来看看下方 vite 官网推荐的第三方库入口文件的定义，就很容易理解了。</p>
+<figure>
+  <img src="/blog/static/images/blog/202301/package_json/package.png" alt="图片">
+  <figcaption><span class="fig-num">FIG 1</span>图片</figcaption>
+</figure>
+<ul>
+  <li>有type:module</li>
+</ul>
+<h3>workspaces</h3>
+<p>项目的工作区配置，用于在本地的根目录下管理多个子项目。可以自动地在 npm install 时将 workspaces 下面的包，软链到根目录的 node_modules 中，不用手动执行 <code>npm link</code> 操作。</p>
+<p>workspaces 字段接收一个数组，数组里可以是文件夹名称或者通配符。比如：</p>
+<pre><code data-language="json">&quot;workspaces&quot;: [
+  &quot;workspace-a&quot;
+]</code></pre>
+<p>表示在 workspace-a 目录下还有一个项目，它也有自己的 package.json。</p>
+<pre><code data-language="go">package.json
+workspace-a
+  └── package.json</code></pre>
+<p>通常子项目都会平铺管理在 packages 目录下，所以根目录下 workspaces 通常配置为：</p>
+<pre><code data-language="json">&quot;workspaces&quot;: [
+  &quot;packages/*&quot;
+]</code></pre>
+<h3>bin</h3>
+<p>指定一个命令名称 对应执行的js文件 安装的包 有这个参数时 会添加在npm的环境变量中，项目script可以直接使用命令，也可以使用npx 全局安装的包，命令会自动添加在系统的环境变量中</p>
+<pre><code data-language="json">&quot;bin&quot;: {
+    &quot;create-kemeng-app&quot;: &quot;./dist/create-kemeng-app.mjs&quot;
+  },</code></pre>
+</section>
+<section>
+<h2><span class="num">02</span>2. 脚本配置</h2>
+<h3>scripts</h3>
+<p>指定项目的一些内置脚本命令，这些命令可以通过 npm run 来执行。通常包含项目开发，构建 等 CI 命令，比如：</p>
+<pre><code data-language="json">&quot;scripts&quot;: {
+  &quot;build&quot;: &quot;webpack&quot;
+}</code></pre>
+<p>我们可以使用命令 <code>npm run build</code> / <code>yarn build</code> 来执行项目构建。</p>
+<p>除了指定基础命令，还可以配合 pre 和 post 完成命令的前置和后续操作，比如：</p>
+<pre><code data-language="json">&quot;scripts&quot;: {
+  &quot;build&quot;: &quot;webpack&quot;,
+  &quot;prebuild&quot;: &quot;xxx&quot;, // build 执行之前的钩子
+  &quot;postbuild&quot;: &quot;xxx&quot; // build 执行之后的钩子
+}</code></pre>
+<p>当执行 <code>npm run build</code> 命令时，会按照 prebuild -&gt; build -&gt; postbuild 的顺序依次执行上方的命令。</p>
+<p>但是这样的隐式逻辑很可能会造成执行工作流的混乱，所以 pnpm 和 yarn2 都已经废弃掉了这种 pre/post 自动执行的逻辑，参考 pnpm issue 讨论 <a href="https://link.juejin.cn?target=https%3A%2F%2Fgithub.com%2Fpnpm%2Fpnpm%2Fissues%2F2891">github.com/pnpm/pnpm/i…</a></p>
+<p>如果需要手动开启，pnpm 项目可以设置 <code>.npmrc</code> enable-pre-post-scripts=true。</p>
+<pre><code data-language="ini">enable-pre-post-scripts=true</code></pre>
+<h3>config</h3>
+<p>config 用于设置 scripts 里的脚本在运行时的参数。比如设置 port 为 3001：</p>
+<pre><code data-language="json">&quot;config&quot;: {
+  &quot;port&quot;: &quot;3001&quot;
+}</code></pre>
+<p>在执行脚本时，我们可以通过 <code>npm_package_config_port</code> 这个变量访问到 3001。</p>
+<pre><code data-language="arduino">console.log(process.env.npm_package_config_port); // 3001</code></pre>
+</section>
+<section>
+<h2><span class="num">03</span>3. 依赖配置</h2>
+<p>项目可能会依赖其他包，需要在 package.json 里配置这些依赖的信息。</p>
+<h3>dependencies</h3>
+<p>运行依赖，也就是项目生产环境下需要用到的依赖。比如 react，vue，状态管理库以及组件库等。</p>
+<p>使用 <code>npm install xxx</code> 或则 <code>npm install xxx --save</code> 时，会被自动插入到该字段中。</p>
+<pre><code data-language="json">&quot;dependencies&quot;: {
+  &quot;react&quot;: &quot;^18.2.0&quot;,
+  &quot;react-dom&quot;: &quot;^18.2.0&quot;
+}</code></pre>
+<h3>devDependencies</h3>
+<p>开发依赖，项目开发环境需要用到而运行时不需要的依赖，用于辅助开发，通常包括项目工程化工具比如 webpack，vite，eslint 等。</p>
+<p>使用 <code>npm install xxx -D</code> 或者 <code>npm install xxx --save-dev</code> 时，会被自动插入到该字段中。</p>
+<pre><code data-language="json">&quot;devDependencies&quot;: {
+  &quot;webpack&quot;: &quot;^5.69.0&quot;
+}</code></pre>
+<h3>peerDependencies</h3>
+<p>同伴依赖，一种特殊的依赖，不会被自动安装，通常用于表示与另一个包的依赖与兼容性关系来警示使用者。</p>
+<p>比如我们安装 A，A 的正常使用依赖 <a href="https://link.juejin.cn?target=mailto%3AB%402.x">B@2.x</a> 版本，那么 <a href="https://link.juejin.cn?target=mailto%3AB%402.x">B@2.x</a> 就应该被列在 A 的 peerDependencies 下，表示“如果你使用我，那么你也需要安装 B，并且至少是 2.x 版本”。</p>
+<p>比如 React 组件库 Ant Design，它的 package.json 里 peerDependencies 为</p>
+<pre><code data-language="json">&quot;peerDependencies&quot;: {
+  &quot;react&quot;: &quot;&gt;=16.9.0&quot;,
+  &quot;react-dom&quot;: &quot;&gt;=16.9.0&quot;
+}</code></pre>
+<p>表示如果你使用 Ant Design，那么你的项目也应该安装 react 和 react-dom，并且版本需要大于等于 16.9.0。</p>
+<h3>optionalDependencies</h3>
+<p>可选依赖，顾名思义，表示依赖是可选的，它不会阻塞主功能的使用，安装或者引入失败也无妨。这类依赖如果安装失败，那么 npm 的整个安装过程也是成功的。</p>
+<p>比如我们使用 colors 这个包来对 console.log 打印的信息进行着色来增强和区分提示，但它并不是必需的，所以可以将其加入到 optionalDependencies，并且在运行时处理引入失败的逻辑。</p>
+<p>使用 <code>npm install xxx -O</code> 或者 <code>npm install xxx --save-optional</code> 时，依赖会被自动插入到该字段中。</p>
+<pre><code data-language="json">&quot;optionalDependencies&quot;: {
+  &quot;colors&quot;: &quot;^1.4.0&quot;
+}</code></pre>
+<h3>peerDependenciesMeta</h3>
+<p>同伴依赖也可以使用 peerDependenciesMeta 将其指定为可选的。</p>
+<pre><code data-language="json">&quot;peerDependencies&quot;: {
+  &quot;colors&quot;: &quot;^1.4.0&quot;
+},
+&quot;peerDependenciesMeta&quot;: {
+  &quot;colors&quot;: {
+    &quot;optional&quot;: true
+   }
+ }</code></pre>
+<h3>bundleDependencies</h3>
+<p>打包依赖。它的值是一个数组，在发布包时，bundleDependencies 里面的依赖都会被一起打包。</p>
+<p>比如指定 react 和 react-dom 为打包依赖：</p>
+<pre><code data-language="json">&quot;bundleDependencies&quot;: [
+  &quot;react&quot;,
+  &quot;react-dom&quot;
+]</code></pre>
+<p>在执行 <code>npm pack</code> 打包生成 tgz 压缩包中，将出现 node_modules 并包含 react 和 react-dom。</p>
+<blockquote>需要注意的是，这个字段数组中的值必须是在 dependencies，devDependencies 两个里面声明过的依赖才行。</blockquote>
+<p>普通依赖通常从 npm registry 安装，但当你想用一个不在 npm registry 里的包，或者一个被修改过的第三方包时，打包依赖会比普通依赖更好用。</p>
+<h3>overrides</h3>
+<p>overrides 可以重写项目<strong>依赖的依赖，及其依赖树下某个依赖</strong>的版本号，进行包的替换。</p>
+<p>比如某个依赖 A，由于一些原因它依赖的包 <a href="https://link.juejin.cn?target=mailto%3Afoo%401.0.0">foo@1.0.0</a> 需要替换，我们可以使用 overrides 修改 foo 的版本号：</p>
+<pre><code data-language="json">&quot;overrides&quot;: {
+  &quot;foo&quot;: &quot;1.1.0-patch&quot;
+}</code></pre>
+<p>当然这样会更改整个依赖树里的 foo，我们可以只对 A 下的 foo 进行版本号重写：</p>
+<pre><code data-language="css">&quot;overrides&quot;: {
+  &quot;A&quot;: {
+    &quot;foo&quot;: &quot;1.1.0-patch&quot;,
+  }
+}</code></pre>
+<p>overrides 支持任意深度的嵌套。</p>
+<blockquote>如果在 yarn 里也想复写依赖版本号，需要使用 resolution 字段，而在 pnpm 里复写版本号需要使用 <code>pnpm.overrides</code> 字段。</blockquote>
+</section>
+<section>
+<h2><span class="num">04</span>4. 描述配置</h2>
+<p>主要是项目的基本信息，包括名称，版本，描述，仓库，作者等，部分会展示在 npm 官网上。</p>
+<figure>
+  <img src="/blog/static/images/blog/202301/package_json/npm1.png" alt="图片">
+  <figcaption><span class="fig-num">FIG 2</span>图片</figcaption>
+</figure>
+<h3>name</h3>
+<p>项目的名称，如果是第三方包的话，其他人可以通过该名称使用 npm install 进行安装。</p>
+<pre><code data-language="json">&quot;name&quot;: &quot;react&quot;</code></pre>
+<h3>version</h3>
+<p>项目的版本号，开源项目的版本号通常遵循 semver 语义化规范，具体规则如下图所示：</p>
+<figure>
+  <img src="/blog/static/images/blog/202301/package_json/yuyi.png" alt="图片">
+  <figcaption><span class="fig-num">FIG 3</span>图片</figcaption>
+</figure>
+<p>简单介绍一下：</p>
+<ul>
+  <li><code>1</code> 代表主版本号 Major，通常在涉及重大功能更新，产生了破坏性变更时会更新此版本号</li>
+</ul>
+<ul>
+  <li><code>2</code> 代表次版本号 Minor，在引入了新功能，但未产生破坏性变更，依然向下兼容时会更新此版本号</li>
+</ul>
+<ul>
+  <li><code>3</code> 代表修订号 Patch，在修复了一些问题，也未产生破坏性变更时会更新此版本号</li>
+</ul>
+<p>除了 X.Y.Z 这样的标准版本号，还有 Pre-release 和 Metadata 来描述项目的测试版本，关于 semver 规范更多的内容，可以参考<a href="https://juejin.cn/post/7122240572491825160">juejin.cn/post/712224…</a></p>
+<p>回到 package.json 的 version 字段，name + version 能共同构成一个完全唯一的项目标识符，所以它两是最重要的两个字段。</p>
+<pre><code data-language="json">&quot;version&quot;: &quot;18.2.0&quot;</code></pre>
+<h3>repository</h3>
+<p>项目的仓库地址以及版本控制信息。</p>
+<pre><code data-language="json">&quot;repository&quot;: {
+  &quot;type&quot;: &quot;git&quot;,
+  &quot;url&quot;: &quot;https://github.com/facebook/react.git&quot;,
+  &quot;directory&quot;: &quot;packages/react&quot;
+}</code></pre>
+<h3>description</h3>
+<p>项目的描述，会展示在 npm 官网，让别人能快速了解该项目。</p>
+<pre><code data-language="json">&quot;description&quot;: &quot;React is a JavaScript library for building user interfaces.&quot;</code></pre>
+<h3>keywords</h3>
+<p>一组项目的技术关键词，比如 Ant Design 组件库的 keywords 如下：</p>
+<pre><code data-language="json">&quot;keywords&quot;: [
+  &quot;ant&quot;,
+  &quot;component&quot;,
+  &quot;components&quot;,
+  &quot;design&quot;,
+  &quot;framework&quot;,
+  &quot;frontend&quot;,
+  &quot;react&quot;,
+  &quot;react-component&quot;,
+  &quot;ui&quot;
+ ],</code></pre>
+<p>好的关键词可以帮助别人在 npm 官网上更好地检索到此项目，增加曝光率。</p>
+<h3>homepage</h3>
+<p>项目主页的链接，通常是项目 github 链接，项目官网或文档首页。</p>
+<pre><code data-language="json">&quot;homepage&quot;: &quot;https://reactjs.org/&quot;</code></pre>
+</section>
+<section>
+<h2><span class="num">05</span>bugs</h2>
+<p>项目 bug 反馈地址，通常是 github issue 页面的链接。</p>
+<pre><code data-language="json">&quot;bugs&quot;: &quot;https://github.com/vuejs/core/issues&quot;</code></pre>
+<h3>license</h3>
+<p>项目的开源许可证。项目的版权拥有人可以使用开源许可证来限制源码的使用、复制、修改和再发布等行为。常见的开源许可证有 BSD、MIT、Apache 等，它们的区别可以参考：如何选择开源许可证？<a href="https://link.juejin.cn?target=https%3A%2F%2Fwww.ruanyifeng.com%2Fblog%2F2011%2F05%2Fhow_to_choose_free_software_licenses.html">www.ruanyifeng.com/blog/2011/0…</a></p>
+<pre><code data-language="json">&quot;license&quot;: &quot;MIT&quot;</code></pre>
+<h3>author</h3>
+<p>项目作者。</p>
+<pre><code data-language="json">&quot;author&quot;: &quot;Li jiaxun&quot;,</code></pre>
+</section>
+<section>
+<h2><span class="num">06</span>5. 发布配置</h2>
+<p>主要是和项目发布相关的配置。</p>
+<h3>private</h3>
+<p>如果是私有项目，不希望发布到公共 npm 仓库上，可以将 private 设为 true。</p>
+<pre><code data-language="json">&quot;private&quot;: true</code></pre>
+<h3>publishConfig</h3>
+<p>顾名思义，publishConfig 就是 npm 包发布时使用的配置。</p>
+<p>比如在安装依赖时指定了 registry 为 taobao 镜像源，但发布时希望在公网发布，就可以指定 publishConfig.registry。</p>
+<pre><code data-language="json">&quot;publishConfig&quot;: {
+  &quot;registry&quot;: &quot;https://registry.npmjs.org/&quot;
+}</code></pre>
+</section>
+<section>
+<h2><span class="num">07</span>6. 系统配置</h2>
+<p>和项目关联的系统配置，比如 node 版本或操作系统兼容性之类。这些要求只会起到提示警告的作用，即使用户的环境不符合要求，也不影响安装依赖包。</p>
+<h3>engines</h3>
+<p>一些项目由于兼容性问题会对 node 或者包管理器有特定的版本号要求，比如：</p>
+<pre><code data-language="json">&quot;engines&quot;: {
+  &quot;node&quot;: &quot;&gt;=14 &lt;16&quot;,
+  &quot;pnpm&quot;: &quot;&gt;7&quot;
+}</code></pre>
+<p>要求 node 版本大于等于 14 且小于 16，同时 pnpm 版本号需要大于 7。</p>
+<h3>os</h3>
+<p>在 linux 上能正常运行的项目可能在 windows 上会出现异常，使用 os 字段可以指定项目对操作系统的兼容性要求。</p>
+<pre><code data-language="json">&quot;os&quot;: [&quot;darwin&quot;, &quot;linux&quot;]</code></pre>
+<h3>cpu</h3>
+<p>指定项目只能在特定的 CPU 体系上运行。</p>
+<pre><code data-language="json">&quot;cpu&quot;: [&quot;x64&quot;, &quot;ia32&quot;]</code></pre>
+</section>
+<section>
+<h2><span class="num">08</span>7. 第三方配置</h2>
+<p>一些第三方库或应用在进行某些内部处理时会依赖这些字段，使用它们时需要安装对应的第三方库。</p>
+<h3>types 或者 typings</h3>
+<p>指定 TypeScript 的类型定义的入口文件</p>
+<pre><code data-language="json">&quot;types&quot;: &quot;./index.d.ts&quot;,</code></pre>
+<h3>unpkg</h3>
+<p>可以让 <code>npm</code> 上所有的文件都开启 CDN 服务。</p>
+<p>比如 vue package.json 的 unpkg 定义为 <code>dist/vue.global.js</code></p>
+<pre><code data-language="json">&quot;unpkg&quot;: &quot;dist/vue.global.js&quot;,</code></pre>
+<p>当我们想通过 CDN 的方式使用链接引入 vue 时。</p>
+<p>访问 <code>https://unpkg.com/vue</code> 会重定向到 <code>https://unpkg.com/vue@3.2.37/dist/vue.global.js</code>，其中 3.2.27 是 Vue 的最新版本。</p>
+<h3>jsdelivr</h3>
+<p>与 unpkg 类似，vue 通过如下的配置</p>
+<pre><code data-language="json">&quot;jsdelivr&quot;: &quot;dist/vue.global.js&quot;,</code></pre>
+<p>访问 <code>https://cdn.jsdelivr.net/npm/vue</code> 实际上获取到的是 jsdelivr 字段里配置的文件地址。</p>
+<figure>
+  <img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/e1bd8184d60547caaf432bdba77b05c4~tplv-k3u1fbpfcp-zoom-in-crop-mark:4536:0:0:0.awebp" alt="图片">
+  <figcaption><span class="fig-num">FIG 4</span>图片</figcaption>
+</figure>
+<h3>browserslist</h3>
+<p>设置项目的浏览器兼容情况。babel 和 autoprefixer 等工具会使用该配置对代码进行转换。当然你也可以使用 <code>.browserslistrc</code> 单文件配置。</p>
+<pre><code data-language="json">&quot;browserslist&quot;: [
+  &quot;&gt; 1%&quot;,
+  &quot;last 2 versions&quot;
+]</code></pre>
+<h3>sideEffects</h3>
+<p>显示设置某些模块具有副作用，用于 webpack 的 tree-shaking 优化。</p>
+<p>比如在项目中整体引入 Ant Design 组件库的 css 文件。</p>
+<pre><code data-language="arduino">import &#39;antd/dist/antd.css&#39;; // or &#39;antd/dist/antd.less&#39;</code></pre>
+<p>如果 Ant Design 的 package.json 里不设置 sideEffects，那么 webapck 构建打包时会认为这段代码只是引入了但并没有使用，可以 tree-shaking 剔除掉，最终导致产物缺少样式。</p>
+<p>所以 Ant Design 在 package.json 里设置了如下的 sideEffects，来告知 webpack，这些文件具有副作用，引入后不能被删除。</p>
+<pre><code data-language="json">&quot;sideEffects&quot;: [
+  &quot;dist/*&quot;,
+  &quot;es/**/style/*&quot;,
+  &quot;lib/**/style/*&quot;,
+  &quot;*.less&quot;
+]</code></pre>
+<h3>lint-staged</h3>
+<p>lint-staged 是用于对 git 的暂存区的文件进行操作的工具，比如可以在代码提交前执行 lint 校验，类型检查，图片优化等操作。</p>
+<pre><code data-language="css">&quot;lint-staged&quot;: {
+  &quot;src/**/*.{js,jsx,ts,tsx}&quot;: [
+    &quot;eslint --fix&quot;,
+    &quot;git add -A&quot;
+  ]
+}</code></pre>
+<p>lint-staged 通常配合 husky 这样的 git-hooks 工具一起使用。git-hooks 用来定义一个钩子，这些钩子方法会在 git 工作流程中比如 pre-commit，commit-msg 时触发，可以把 lint-staged 放到这些钩子方法中。</p>
+</section>
+
+      <div class="source-note">Migrated from data/blog/202301/package_json.md</div>
+    </article>
+  </body>
+</html>

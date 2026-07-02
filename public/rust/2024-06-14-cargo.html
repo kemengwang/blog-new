@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cargo</title>
+    <meta name="description" content="Rust包管理器，可以媲美npm的优秀管理器" />
+    <style>
+      :root {
+        --paper: #f7f7f5;
+        --paper-edge: #efefea;
+        --ink: #1a1a1a;
+        --ink-soft: #4a4a4a;
+        --ink-faint: #7a7a7a;
+        --rule: #d8d8d2;
+        --rule-soft: #e8e8e2;
+        --accent: #6f9bb8;
+        --accent-soft: #d9e6f0;
+        --accent-faint: #eef4f8;
+        --warn: #b88a4a;
+        --warn-soft: #f5ecdc;
+        --danger: #a05050;
+        --code-bg: #ececea;
+
+        /* Semantic palette for three-layer cards. Rename freely
+           (e.g. --layer-a / --layer-b / --layer-c) when the three
+           layers in the doc are not brain/hands/session. */
+        --brain: #6f9bb8;
+        --brain-bg: #eef4f8;
+        --hands: #b88a4a;
+        --hands-bg: #f5ecdc;
+        --session: #6b7560;
+        --session-bg: #ecede5;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { font-size: 16px; }
+
+      /* Font stacks include both English serifs/monospace and CJK
+         fallbacks so the same template renders cleanly for English
+         or Chinese source content. */
+      body {
+        font-family:
+          ui-serif, "Charter", "Iowan Old Style", "Source Serif Pro", Georgia,
+          "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+        background: var(--paper);
+        color: var(--ink);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        padding: 64px 24px 96px;
+      }
+
+      .doc { max-width: 840px; margin: 0 auto; }
+
+      /* ─── Header ─── */
+      .doc-header {
+        border-bottom: 1px solid var(--rule);
+        padding-bottom: 28px;
+        margin-bottom: 48px;
+      }
+      .doc-eyebrow {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 14px;
+      }
+      .doc-title {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 34px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+      }
+      .doc-subtitle {
+        font-size: 16px;
+        color: var(--ink-soft);
+        margin-top: 10px;
+        font-style: italic;
+      }
+      .doc-meta {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        color: var(--ink-faint);
+        margin-top: 18px;
+        display: flex;
+        gap: 24px;
+      }
+
+      /* ─── TL;DR ─── */
+      .tldr {
+        background: var(--accent-faint);
+        border-left: 2px solid var(--accent);
+        padding: 20px 24px;
+        margin-bottom: 56px;
+        font-size: 15px;
+      }
+      .tldr-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      /* ─── Sections ─── */
+      section { margin-bottom: 56px; }
+      h2 {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.005em;
+        margin-bottom: 18px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--rule);
+      }
+      h2 .num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-weight: 500;
+        margin-right: 14px;
+        letter-spacing: 0.05em;
+      }
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 28px 0 10px;
+      }
+      h4 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 22px 0 8px;
+      }
+      p { margin-bottom: 14px; }
+      p + p { margin-top: -2px; }
+      a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+      a:hover { border-bottom-color: var(--accent); }
+      code {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+        background: var(--code-bg);
+        padding: 1px 5px;
+        border-radius: 2px;
+      }
+      pre {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12.5px;
+        line-height: 1.55;
+        background: var(--code-bg);
+        padding: 14px 18px;
+        margin: 14px 0 18px;
+        overflow-x: auto;
+        border-left: 2px solid var(--rule);
+      }
+      pre code { background: transparent; padding: 0; }
+      ul, ol { margin: 8px 0 16px 22px; }
+      li { margin-bottom: 6px; }
+      strong { font-weight: 600; }
+      em { color: var(--ink-soft); }
+      blockquote {
+        border-left: 2px solid var(--rule);
+        padding: 4px 0 4px 18px;
+        margin: 14px 0 18px;
+        color: var(--ink-soft);
+        font-style: italic;
+      }
+
+      /* ─── Tables ─── */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 14px 0 18px;
+        font-size: 14px;
+      }
+      th, td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--rule-soft);
+        vertical-align: top;
+      }
+      th {
+        font-weight: 600;
+        font-family:
+          ui-sans-serif, system-ui,
+          "PingFang SC", "Hiragino Sans GB", sans-serif;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--ink-faint);
+        border-bottom: 1px solid var(--rule);
+      }
+      tbody tr:hover { background: rgba(0,0,0,0.015); }
+      td.num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+      }
+      td.accent { color: var(--accent); font-weight: 500; }
+
+      /* ─── Callouts ─── */
+      .callout {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 18px;
+        margin: 16px 0 20px;
+      }
+      .callout.warn {
+        border-color: #e6d4a8;
+        background: var(--warn-soft);
+      }
+      .callout.cite {
+        border-left: 2px solid var(--accent);
+        border-top: none; border-right: none; border-bottom: none;
+        background: var(--accent-faint);
+        padding-left: 22px;
+        font-style: italic;
+      }
+      .callout-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .callout.warn .callout-label { color: var(--warn); }
+      .cite-source {
+        font-style: normal;
+        font-size: 12px;
+        color: var(--ink-faint);
+        margin-top: 10px;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+      }
+
+      /* ─── Figure / Diagram ─── */
+      figure {
+        margin: 28px 0 32px;
+        border: 1px solid var(--rule);
+        background: #fff;
+      }
+      figure svg { display: block; width: 100%; height: auto; }
+      figure img { display: block; width: 100%; height: auto; }
+      figcaption {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        padding: 10px 16px;
+        border-top: 1px solid var(--rule-soft);
+        background: var(--paper-edge);
+      }
+      figcaption .fig-num {
+        color: var(--accent);
+        margin-right: 10px;
+        font-weight: 600;
+      }
+
+      /* ─── N-column concept cards ─── */
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin: 20px 0 18px;
+      }
+      .cards.cols-2 { grid-template-columns: repeat(2, 1fr); }
+      .cards.cols-4 { grid-template-columns: repeat(4, 1fr); }
+      .card {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 16px 14px;
+      }
+      .card-icon {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .card-name {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 17px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .card-where {
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-style: italic;
+        margin-bottom: 10px;
+      }
+      .card-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+
+      /* tone variants for cards */
+      .card.tone-a .card-icon { color: var(--brain); }
+      .card.tone-b .card-icon { color: var(--hands); }
+      .card.tone-c .card-icon { color: var(--session); }
+
+      /* ─── Buttons / Inputs (for interactive sections) ─── */
+      .btn {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 8px 14px;
+        background: #fff;
+        color: var(--ink);
+        border: 1px solid var(--rule);
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn:hover { background: var(--paper-edge); }
+      .btn.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .btn.primary:hover { background: #5a87a4; }
+
+      input[type="text"], input[type="email"], textarea, select {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 14px;
+        padding: 8px 12px;
+        background: #fff;
+        border: 1px solid var(--rule);
+        color: var(--ink);
+        width: 100%;
+        margin-bottom: 10px;
+      }
+      input:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      /* ─── Footer ─── */
+      footer {
+        margin-top: 80px;
+        padding-top: 24px;
+        border-top: 1px solid var(--rule);
+        font-size: 12px;
+        color: var(--ink-faint);
+      }
+      footer h4 {
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        margin-bottom: 10px;
+        color: var(--ink-soft);
+      }
+      footer ul { list-style: none; margin-left: 0; }
+      footer li { margin-bottom: 4px; }
+
+      .mascot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+
+      @media (max-width: 720px) {
+        body { padding: 32px 16px 64px; }
+        .doc-title { font-size: 26px; }
+        .cards, .cards.cols-2, .cards.cols-4 { grid-template-columns: 1fr; }
+        .doc-meta { flex-wrap: wrap; gap: 12px; }
+      }
+    
+
+      .source-note {
+        border-top: 1px solid var(--rule);
+        color: var(--ink-faint);
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        margin-top: 56px;
+        padding-top: 14px;
+        text-transform: uppercase;
+      }
+</style>
+  </head>
+  <body>
+    <article class="doc">
+      <header class="doc-header">
+        <div class="doc-eyebrow"><span class="mascot"></span>Rust · Migrated Article</div>
+        <h1 class="doc-title">Cargo</h1>
+        <p class="doc-subtitle">Rust包管理器，可以媲美npm的优秀管理器</p>
+        <div class="doc-meta">
+          <span>DATE · 2024-06-14</span>
+          <span>TAGS · Rust, Cargo</span>
+          <span>SOURCE · old blog</span>
+        </div>
+      </header>
+
+      <div class="tldr">
+        <div class="tldr-label">TL;DR</div>
+        Rust包管理器，可以媲美npm的优秀管理器
+      </div>
+
+      <section>
+<h2><span class="num">01</span>介绍</h2>
+<p>一个包管理工具</p>
+<h3>基本概念</h3>
+<p>Crate 包.      Package 项目</p>
+<p>创建一个新的二进制项目. (二进制意味着该项目可以作为一个服务运行或被编译成可执行文件运行)</p>
+<pre><code data-language="zsh">cargo new hello_world</code></pre>
+<p>等价</p>
+<pre><code data-language="zsh">cargo new hello_world --bin</code></pre>
+<p>(--bin 默认参数)</p>
+<p>新建的项目结构</p>
+<ul>
+  <li><code>Cargo.toml</code> 和 <code>Cargo.lock</code> 保存在 <code>package</code> 根目录下</li>
+  <li>源代码放在 <code>src</code> 目录下</li>
+  <li>默认的 <code>lib</code> 包根是 <code>src/lib.rs</code></li>
+  <li>默认的二进制包根是 <code>src/main.rs</code></li>
+  <li>其它二进制包根放在 <code>src/bin/</code> 目录下</li>
+  <li>基准测试 benchmark 放在 <code>benches</code> 目录下</li>
+  <li>示例代码放在 <code>examples</code> 目录下</li>
+  <li>集成测试代码放在 <code>tests</code> 目录下</li>
+</ul>
+<h3>常用操作</h3>
+<h4>编译 运行</h4>
+<p>编译构建 生成可执行的二进制文件 --release是生产模式（大量优化）</p>
+<pre><code data-language="zsh">cargo build
+cargo build --release</code></pre>
+<p>再运行</p>
+<pre><code data-language="zsh">./target/debug/hello_world</code></pre>
+<p>编译+运行</p>
+<pre><code data-language="zsh">cargo run
+cargo run --release</code></pre>
+<p>指定目标平台 输出会放在 <code>target/XXX/</code> 目录下</p>
+<pre><code data-language="zsh">cargo build --target XXX </code></pre>
+<p>不指定  则会放在<code>target/</code>下(根据宿主架构)</p>
+<p>target下的每个子目录都包含了发布配置的profile</p>
+<table>
+  <thead><tr><th>目录</th><th>描述</th></tr></thead>
+  <tbody>
+    <tr><td><code>target/debug/</code></td><td>包含了 <code>dev</code> profile 的构建输出(<code>cargo build</code> 或 <code>cargo build --debug</code>)</td></tr>
+    <tr><td><code>target/release/</code></td><td><code>release</code> profile 的构建输出，<code>cargo build --release</code></td></tr>
+    <tr><td><code>target/foo/</code></td><td>自定义 <code>foo</code> profile 的构建输出，<code>cargo build --profile=foo</code></td></tr>
+  </tbody>
+</table>
+<p>出于历史原因:</p>
+<ul>
+  <li><code>dev</code> 和 <code>test</code> profile 的构建结果都存放在 <code>debug</code> 目录下</li>
+  <li><code>release</code> 和 <code>bench</code> profile 则存放在 <code>release</code> 目录下</li>
+  <li>用户定义的 profile 存在同名的目录下</li>
+</ul>
+<p>build后除了执行未见还有 依赖信息文件.d  提供给外部用(说明构建编译成果所需的所有依赖包)</p>
+<h4>添加/更新依赖</h4>
+<p><a href="https://crates.io/"><code>crates.io</code></a> 是rust社区维护的注册中心，默认从这里下载依赖</p>
+<p>手动指定 build时会重新构建</p>
+<pre><code>[dependencies]
+time = &quot;0.1.12&quot;</code></pre>
+<p>命令添加</p>
+<pre><code data-language="zsh">cargo add time</code></pre>
+<p>以上操作 会更新Cargo.lock 锁住对应版本 防止下次build版本不同</p>
+<p>更新依赖</p>
+<pre><code data-language="zsh">cargo update # 更新所有
+
+cargo update -p regex # 更新regex</code></pre>
+<h4>测试和CI</h4>
+<p><code>cargo test</code>：寻找src/下单元测试 tests/下集成测试</p>
+<h3>Workspace</h3>
+<p>一个工作空间是由多个Package组成 共享同一个 <code>Cargo.lock</code>、 输出目录<code>target</code>和一些设置</p>
+<p>只有工作空间根目录的 <code>Cargo.toml</code> 才能包含 <code>[patch]</code>, <code>[replace]</code> 和 <code>[profile.*]</code>，而成员的 <code>Cargo.toml</code> 中的相应部分将被自动忽略</p>
+<p>工作空间有两种类型：<code>root package</code> 和虚拟清单( virtual manifest )。</p>
+<h4>root package</h4>
+<p>一个package的Cargo.toml包含了<code>[package]</code> 的同时又包含了 <code>[workspace]</code></p>
+<p>举个例子，大名鼎鼎的 <a href="https://github.com/BurntSushi/ripgrep/blob/master/Cargo.toml">ripgrep</a> 就在最外层的 <code>package</code> 中定义了 <code>[workspace]</code> :</p>
+<pre><code data-language="toml">[workspace]
+members = [
+  &quot;crates/globset&quot;,
+  &quot;crates/grep&quot;,
+  &quot;crates/cli&quot;,
+  &quot;crates/matcher&quot;,
+  &quot;crates/pcre2&quot;,
+  &quot;crates/printer&quot;,
+  &quot;crates/regex&quot;,
+  &quot;crates/searcher&quot;,
+  &quot;crates/ignore&quot;,
+]</code></pre>
+<h4>虚拟清单</h4>
+<p>一个 Cargo.toml 只有<code>[workspace]</code></p>
+<p>对于没有主 <code>package</code> 的场景或你希望将所有的 <code>package</code> 组织在单独的目录中时 使用</p>
+<h4>\[workspace\]</h4>
+<p>如果本地依赖通过path引入 且在工作空间中 则该包自动成为工作空间成员</p>
+<p>剩余的成员需要通过 <code>workspace.members</code> 指定 包含了各个成员所在的目录(成员目录中包含了 Cargo.toml ) crates/* 匹配<code>crates</code> 目录下的所有包 <code>exclude</code> 排除 <code>crates/foo</code> foo不算</p>
+<pre><code data-language="toml">[workspace]
+members = [&quot;member1&quot;, &quot;path/to/member2&quot;, &quot;crates/*&quot;]
+exclude = [&quot;crates/foo&quot;, &quot;path/to/other&quot;]</code></pre>
+<p>你也可以将一个空的 <code>[workspace]</code> 直接联合 <code>[package]</code> 使用，例如：</p>
+<pre><code data-language="toml">[package]
+name = &quot;hello&quot;
+version = &quot;0.1.0&quot;
+
+[workspace]</code></pre>
+<p>此时的工作空间的成员包含:</p>
+<ul>
+  <li>根 <code>package</code> : &quot;hello&quot;</li>
+  <li>所有通过 <code>path</code> 引入的本地依赖(位于工作空间目录下)</li>
+</ul>
+<h4>选择工作空间</h4>
+<p>cargo会自动查找带有[workspace] 的<code>Cargo.toml</code></p>
+<p>也可以给成员包指定工作空间 package.workspace （适用于成员不在工作空间的子目录下）</p>
+<h4>选择package</h4>
+<p><code>-p</code> 、 <code>--package</code> 命令行参数来指定想要操作的 <code>package</code> <code>--workspace</code>  所有成员</p>
+<p>没有任何参数 将使用当前工作目录的中的 <code>package</code> 实体清单型则等价于加了<code>--workspace</code>或者添加default-members</p>
+<pre><code data-language="toml">[workspace]
+members = [&quot;path/to/member1&quot;, &quot;path/to/member2&quot;, &quot;path/to/member3/*&quot;]
+default-members = [&quot;path/to/member2&quot;, &quot;path/to/member3/foo&quot;]</code></pre>
+<h4>workspace.metadata</h4>
+<p>与 <a href="https://course.rs/cargo/reference/manifest.html#metadata">package.metadata</a> 非常类似，<code>workspace.metadata</code> 会被 <code>Cargo</code> 自动忽略 存一些元信息</p>
+<pre><code data-language="toml">[workspace]
+members = [&quot;member1&quot;, &quot;member2&quot;]
+
+[workspace.metadata.webcontents]
+root = &quot;path/to/webproject&quot;
+tool = [&quot;npm&quot;, &quot;run&quot;, &quot;build&quot;]
+# ...</code></pre>
+<h3>缓存</h3>
+<p>cargo使用了缓存 提升构建效率 已下载的依赖在 CARGO_HOME目录</p>
+<h4>cargo home</h4>
+<p>默认是在 $HOME/.cargo/</p>
+<pre><code data-language="zsh">$ echo $HOME/.cargo/
+/Users/sunfei/.cargo/</code></pre>
+<p>该目录内容解释:<a href="https://course.rs/cargo/guide/cargo-cache.html#cargo-home">link</a></p>
+<h4>在 CI 时缓存 Cargo Home</h4>
+<p>为了避免持续集成时重复下载所有的包依赖，我们可以将 <code>$CARGO_HOME</code> 目录进行缓存，但缓存整个目录是效率低下的，原因是源文件可能会被缓存两次。</p>
+<p>例如我们依赖一个包 <code>serde 1.0.92</code>，如果将整个 <code>$CACHE_HOME</code> 目录缓存，那么<code>serde</code> 的源文件就会被缓存两次：在 <code>registry/cache</code> 中的 <code>serde-1.0.92.crate</code> 以及 <code>registry/src</code> 下被解压缩的 <code>.rs</code> 文件。</p>
+<p>因此，在 CI 构建时，出于效率的考虑，我们仅应该缓存以下目录:</p>
+<ul>
+  <li><code>bin/</code></li>
+  <li><code>registry/index/</code></li>
+  <li><code>registry/cache/</code></li>
+  <li><code>git/db/</code></li>
+</ul>
+<h4>build缓存</h4>
+<p>以上主要是依赖的缓存</p>
+<p>build会在target文件中</p>
+</section>
+
+      <div class="source-note">Migrated from data/blog/202406/Cargo.md</div>
+    </article>
+  </body>
+</html>
