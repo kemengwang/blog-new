@@ -1,0 +1,15 @@
+{
+  "name": "blog-new",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "new": "node src/scripts/create-post.mjs",
+    "build": "node src/scripts/build-index.mjs",
+    "publish": "node src/scripts/publish.mjs",
+    "serve": "python3 -m http.server 3436 --directory public"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
