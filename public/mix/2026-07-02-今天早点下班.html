@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="今天事情顺利跑通，可以早点下班。把进度收好，把心情放轻，这就是一个值得记下来的快乐日子。" />
+    <title>今天早点下班</title>
+    <style>
+      :root {
+        --paper: #f7f7f5;
+        --paper-edge: #efefea;
+        --ink: #1a1a1a;
+        --ink-soft: #4a4a4a;
+        --ink-faint: #7a7a7a;
+        --rule: #d8d8d2;
+        --rule-soft: #e8e8e2;
+        --accent: #6f9bb8;
+        --accent-soft: #d9e6f0;
+        --accent-faint: #eef4f8;
+        --warn: #b88a4a;
+        --warn-soft: #f5ecdc;
+        --code-bg: #ececea;
+        --session: #6b7560;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { font-size: 16px; }
+      body {
+        font-family:
+          ui-serif, "Charter", "Iowan Old Style", "Source Serif Pro", Georgia,
+          "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+        background: var(--paper);
+        color: var(--ink);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        padding: 64px 24px 96px;
+      }
+
+      .doc { max-width: 840px; margin: 0 auto; }
+      .doc-header {
+        border-bottom: 1px solid var(--rule);
+        padding-bottom: 28px;
+        margin-bottom: 48px;
+      }
+      .doc-eyebrow {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 14px;
+      }
+      .doc-title {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 34px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+      }
+      .doc-subtitle {
+        font-size: 16px;
+        color: var(--ink-soft);
+        margin-top: 10px;
+        font-style: italic;
+      }
+      .doc-meta {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        color: var(--ink-faint);
+        margin-top: 18px;
+        display: flex;
+        gap: 24px;
+      }
+      .tldr {
+        background: var(--accent-faint);
+        border-left: 2px solid var(--accent);
+        padding: 20px 24px;
+        margin-bottom: 56px;
+        font-size: 15px;
+      }
+      .tldr-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      section { margin-bottom: 56px; }
+      h2 {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.005em;
+        margin-bottom: 18px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--rule);
+      }
+      h2 .num {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-weight: 500;
+        margin-right: 14px;
+        letter-spacing: 0.05em;
+      }
+      p { margin-bottom: 14px; }
+      strong { font-weight: 600; }
+      em { color: var(--ink-soft); }
+      blockquote {
+        border-left: 2px solid var(--rule);
+        padding: 4px 0 4px 18px;
+        margin: 14px 0 18px;
+        color: var(--ink-soft);
+        font-style: italic;
+      }
+      .callout {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 18px;
+        margin: 16px 0 20px;
+      }
+      .callout-label {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin: 20px 0 18px;
+      }
+      .card {
+        border: 1px solid var(--rule);
+        background: #fff;
+        padding: 16px 16px 14px;
+      }
+      .card-icon {
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .card-name {
+        font-family:
+          ui-serif, Charter, Georgia,
+          "Songti SC", "Source Han Serif SC", serif;
+        font-size: 17px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .card-where {
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-style: italic;
+        margin-bottom: 10px;
+      }
+      .card-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+      footer {
+        margin-top: 80px;
+        padding-top: 24px;
+        border-top: 1px solid var(--rule);
+        font-size: 12px;
+        color: var(--ink-faint);
+      }
+      footer h4 {
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-family:
+          ui-monospace, Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        margin-bottom: 10px;
+        color: var(--ink-soft);
+      }
+      footer ul { list-style: none; margin-left: 0; }
+      code {
+        font-family:
+          ui-monospace, "SF Mono", Menlo,
+          "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+        background: var(--code-bg);
+        padding: 1px 5px;
+        border-radius: 2px;
+      }
+      .mascot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+      @media (max-width: 720px) {
+        body { padding: 32px 16px 64px; }
+        .doc-title { font-size: 26px; }
+        .cards { grid-template-columns: 1fr; }
+        .doc-meta { flex-wrap: wrap; gap: 12px; }
+      }
+    </style>
+  </head>
+  <body>
+    <article class="doc">
+      <header class="doc-header">
+        <div class="doc-eyebrow"><span class="mascot"></span>Mix · Daily Note</div>
+        <h1 class="doc-title">今天早点下班</h1>
+        <p class="doc-subtitle">把事情做完，把心情放轻，快乐就刚刚好。</p>
+        <div class="doc-meta">
+          <span>STATUS · PUBLISHED</span>
+          <span>DATE · 2026-07-02</span>
+          <span>AUTHOR · kemengwang</span>
+        </div>
+      </header>
+
+      <div class="tldr">
+        <div class="tldr-label">TL;DR</div>
+        今天是可以早点下班的一天。事情顺利推进，链路稳定跑通，心里那点悬着的东西终于落地。这样的日子不用写得太重，只要记住：进度在往前走，人也应该轻一点。
+      </div>
+
+      <section>
+        <h2><span class="num">01</span>快乐来自一种确定感</h2>
+        <p>今天的快乐不是突然发生的，它更像是很多小事情依次对上了：想法有出口，工具能响应，页面能打开，流程没有再制造额外的阻力。</p>
+        <p>当一件事从“应该能成”变成“已经成了”，人的状态会明显松下来。那不是偷懒，也不是提前结束，而是知道今天该交付的重量已经被稳稳放下。</p>
+        <blockquote>可以早点下班，往往说明今天没有欠自己太多。</blockquote>
+      </section>
+
+      <section>
+        <h2><span class="num">02</span>把好状态留到明天</h2>
+        <p>很多时候，最好的工作节奏不是把一天榨到最后一分钟，而是在事情已经清楚的时候及时收住。收住不是停滞，是把今天的成果保存好，把明天的余力也保存好。</p>
+        <p>早点下班的意义，在于它给了人一点恢复空间。吃一顿不赶时间的饭，走一段不用赶路的路，或者只是安静地坐一会儿，都能让今天的完成感变得更完整。</p>
+        <div class="cards">
+          <div class="card">
+            <div class="card-icon">DONE</div>
+            <div class="card-name">事情完成</div>
+            <div class="card-where">→ 进度落地</div>
+            <div class="card-desc">今天该跑通的已经跑通，剩下的是把状态收好。</div>
+          </div>
+          <div class="card">
+            <div class="card-icon">LIGHT</div>
+            <div class="card-name">心情变轻</div>
+            <div class="card-where">→ 没有多余负担</div>
+            <div class="card-desc">流程顺了，人的注意力就能从焦虑里退出来。</div>
+          </div>
+          <div class="card">
+            <div class="card-icon">LIFE</div>
+            <div class="card-name">生活接住</div>
+            <div class="card-where">→ 下班也重要</div>
+            <div class="card-desc">工作有结果，生活有时间，这一天才算完整。</div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2><span class="num">03</span>今天就到这里</h2>
+        <p>不需要再给今天加太多注解。它已经足够好：事情顺，心情好，可以早点离开电脑，也可以带着一点轻微的得意去过晚上的时间。</p>
+        <p>这样的日子值得被记录，因为它提醒人：效率不是为了把更多事情塞进同一天，而是为了让值得开心的时刻早点到来。</p>
+        <div class="callout">
+          <div class="callout-label">TODAY</div>
+          今天早点下班。快乐的一天，合理收工。
+        </div>
+      </section>
+
+      <footer>
+        <h4>Note</h4>
+        <ul>
+          <li>Published through the DOH static HTML flow · category <code>mix</code></li>
+        </ul>
+      </footer>
+    </article>
+  </body>
+</html>
