@@ -104,6 +104,7 @@ location = /blog {
 
 location ~ ^/blog/(.+\.html)$ {
   alias /var/www/blog/$1;
+  default_type text/html;
 }
 
 location /blog/ {
