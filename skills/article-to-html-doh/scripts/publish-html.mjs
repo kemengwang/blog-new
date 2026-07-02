@@ -35,7 +35,7 @@ function parseArgs(argv) {
   for (let index = 0; index < argv.length; index += 1) {
     const item = argv[index]
 
-    if (item === '--category') {
+    if (item === '--category' || item === '--c') {
       args.category = argv[index + 1] || ''
       index += 1
     } else if (item === '--dry-run') {
@@ -143,7 +143,7 @@ const env = { ...readEnv(envPath), ...process.env }
 const args = parseArgs(process.argv.slice(2))
 
 if (!args.htmlFile) {
-  throw new Error('Usage: node scripts/publish-html.mjs <html-file> --category <category>')
+  throw new Error('Usage: node scripts/publish-html.mjs <html-file> --c <category>')
 }
 
 requireConfig(env)
