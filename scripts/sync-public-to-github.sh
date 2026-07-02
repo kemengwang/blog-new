@@ -25,7 +25,7 @@ git -C "$REPO_DIR" pull --ff-only origin "$BRANCH"
 
 rsync -a --delete "$SOURCE_DIR"/ "$TARGET_DIR"/
 
-if git -C "$REPO_DIR" diff --quiet -- "$TARGET_DIR"; then
+if [ -z "$(git -C "$REPO_DIR" status --porcelain -- "$TARGET_DIR")" ]; then
   echo "no article changes to sync"
   exit 0
 fi
