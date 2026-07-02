@@ -121,3 +121,13 @@ Node SSR 服务需要设置：
 BLOG_CONTENT_DIR=/var/www/blog
 BLOG_BASE_PATH=/blog
 ```
+
+## Docker 部署
+
+服务器上构建并启动 SSR 首页服务：
+
+```bash
+docker compose up -d --build
+```
+
+`compose.yml` 默认把宿主机 `BLOG_CONTENT_DIR=/var/www/blog` 挂载到容器内 `/data/blog`，容器只监听本机 `127.0.0.1:3436`，由 Nginx 反向代理 `/blog/` 首页和分类页。

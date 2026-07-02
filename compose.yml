@@ -1,0 +1,15 @@
+services:
+  blog-index:
+    build: .
+    container_name: blog-index
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3436
+      BLOG_BASE_PATH: ${BLOG_BASE_PATH:-/blog}
+      BLOG_CONTENT_DIR: /data/blog
+    ports:
+      - "127.0.0.1:3436:3436"
+    volumes:
+      - ${BLOG_CONTENT_DIR:-./public}:/data/blog:ro
