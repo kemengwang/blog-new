@@ -132,3 +132,37 @@ docker compose up -d --build
 ```
 
 `compose.yml` 默认把宿主机 `BLOG_CONTENT_DIR=/var/www/blog` 挂载到容器内 `/data/blog`，容器只监听本机 `127.0.0.1:3436`，由 Nginx 反向代理 `/blog/` 首页和分类页。
+
+## 文章备份到 GitHub
+
+文章主发布链路不依赖 GitHub：Skill 直接上传 HTML 到服务器 `/var/www/blog`。为了避免服务器磁盘故障导致文章丢失，可以在服务器上每天把文章目录同步回仓库的 `public/` 并推送到 GitHub。
+
+脚本：
+
+```bash
+scripts/sync-public-to-github.sh
+```
+
+默认行为：
+
+```text
+/var/www/blog -> /opt/blog-new/public -> git push origin main
+```
+
+可覆盖的环境变量：
+
+```env
+BLOG_BACKUP_REPO_DIR=/opt/blog-new
+BLOG_BACKUP_SOURCE_DIR=/var/www/blog
+BLOG_BACKUP_TARGET_DIR=/opt/blog-new/public
+BLOG_BACKUP_BRANCH=main
+BLOG_BACKUP_COMMIT_PREFIX=backup: sync published articles
+```
+
+服务器 cron 示例，每天 03:20 同步一次：
+
+```cron
+20 3 * * * /opt/blog-new/scripts/sync-public-to-github.sh >> /var/log/blog-public-backup.log 2>&1
+```
+
+服务器需要能从该仓库执行 `git push origin main`，建议使用 deploy key 或服务器 SSH key。
