@@ -76,6 +76,20 @@ function getTitle(html, htmlFile) {
   return decodeEntities(stripTags(title)) || path.basename(htmlFile, '.html')
 }
 
+function getSummary(html) {
+  const metaDescription =
+    html.match(/<meta\s+[^>]*name=["']description["'][^>]*content=["']([^"']+)["'][^>]*>/i)?.[1] ||
+    html.match(/<meta\s+[^>]*content=["']([^"']+)["'][^>]*name=["']description["'][^>]*>/i)?.[1]
+  const paragraph = html.match(/<p[^>]*>([\s\S]*?)<\/p>/i)?.[1]
+  const summary = decodeEntities(stripTags(metaDescription || paragraph))
+
+  if (summary.length <= 160) {
+    return summary
+  }
+
+  return `${summary.slice(0, 157).trim()}...`
+}
+
 function getDate(html) {
   const dateMatch = html.match(/\b(\d{4}-\d{2}-\d{2})\b/)
   return dateMatch?.[1] || new Date().toISOString().slice(0, 10)
@@ -156,6 +170,7 @@ if (!fs.existsSync(htmlFile)) {
 
 const html = fs.readFileSync(htmlFile, 'utf8')
 const title = getTitle(html, htmlFile)
+const summary = getSummary(html) || title
 const date = getDate(html)
 const category = slugify(args.category || env.DOH_DEFAULT_CATEGORY || 'notes')
 const remoteFileName = `${date}-${slugify(title)}.html`
@@ -167,8 +182,8 @@ const flags = (env.DOH_RSYNC_FLAGS || '-az').split(/\s+/).filter(Boolean)
 const mkdirCommand = `mkdir -p ${JSON.stringify(remoteDir)}`
 
 if (args.dryRun) {
-  console.log(`Dry run: ${htmlFile} -> ${destination}`)
-  console.log(`Public URL: ${publicUrl}`)
+  console.log(`URL: ${publicUrl}`)
+  console.log(`Summary: ${summary}`)
   process.exit(0)
 }
 
@@ -180,4 +195,5 @@ if (env.DOH_PASSWORD) {
   run('rsync', [...flags, htmlFile, destination])
 }
 
-console.log(`Published: ${publicUrl}`)
+console.log(`URL: ${publicUrl}`)
+console.log(`Summary: ${summary}`)
