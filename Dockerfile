@@ -1,13 +1,13 @@
-FROM node:22-alpine AS deps
+FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm config set registry https://registry.npmmirror.com && npm ci --no-audit --no-fund
 
 FROM deps AS build
 COPY . .
 RUN npm run build
 
-FROM node:22-alpine AS runner
+FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
