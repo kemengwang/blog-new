@@ -16,7 +16,7 @@ ENV BLOG_BASE_PATH=/blog
 ENV BLOG_CONTENT_DIR=/data/blog
 
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY src ./src
 
