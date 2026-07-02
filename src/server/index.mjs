@@ -2,7 +2,6 @@ import fs from 'node:fs'
 import http from 'node:http'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { createServer as createViteServer } from 'vite'
 import { getRuntimeConfig } from './content.mjs'
 import { getCategories, scanPosts } from './scan-posts.mjs'
 
@@ -10,10 +9,16 @@ const isProduction = process.env.NODE_ENV === 'production'
 const { basePath, contentDir, host, port } = getRuntimeConfig()
 const vite = isProduction
   ? null
-  : await createViteServer({
+  : await createDevViteServer()
+
+async function createDevViteServer() {
+  const { createServer } = await import('vite')
+
+  return createServer({
       appType: 'custom',
       server: { middlewareMode: true },
     })
+}
 
 function normalizePathname(url) {
   return decodeURIComponent(new URL(url || '/', `http://${host}:${port}`).pathname)
