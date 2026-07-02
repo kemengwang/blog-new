@@ -149,6 +149,8 @@ scripts/sync-public-to-github.sh
 /var/www/blog -> /opt/blog-new/public -> git push origin main
 ```
 
+如果线上运行目录不是 Git 仓库，可以单独准备一个备份工作区，例如 `/opt/blog-new-backup`，并在 cron 中设置 `BLOG_BACKUP_REPO_DIR=/opt/blog-new-backup`。这个目录只负责同步和推送备份，不参与线上 Docker 服务运行。
+
 可覆盖的环境变量：
 
 ```env
@@ -163,6 +165,12 @@ BLOG_BACKUP_COMMIT_PREFIX=backup: sync published articles
 
 ```cron
 20 3 * * * /opt/blog-new/scripts/sync-public-to-github.sh >> /var/log/blog-public-backup.log 2>&1
+```
+
+使用独立备份工作区时：
+
+```cron
+20 3 * * * BLOG_BACKUP_REPO_DIR=/opt/blog-new-backup /opt/blog-new-backup/scripts/sync-public-to-github.sh >> /var/log/blog-public-backup.log 2>&1
 ```
 
 服务器需要能从该仓库执行 `git push origin main`，建议使用 deploy key 或服务器 SSH key。
