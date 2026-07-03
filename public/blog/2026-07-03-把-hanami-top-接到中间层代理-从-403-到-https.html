@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="一次把 hanami.top 接到中间层反向代理的上线复盘：nginx、Host 头、SSL 证书和 301 Location 重写。" />
+    <title>把 hanami.top 接到中间层代理：从 403 到 HTTPS</title>
+    <style>
+      :root {
+        --paper: #f7f7f5;
+        --paper-edge: #efefea;
+        --ink: #1a1a1a;
+        --ink-soft: #4a4a4a;
+        --ink-faint: #7a7a7a;
+        --rule: #d8d8d2;
+        --rule-soft: #e8e8e2;
+        --accent: #6f9bb8;
+        --accent-soft: #d9e6f0;
+        --accent-faint: #eef4f8;
+        --warn: #b88a4a;
+        --warn-soft: #f5ecdc;
+        --danger: #a05050;
+        --code-bg: #ececea;
+        --brain: #6f9bb8;
+        --brain-bg: #eef4f8;
+        --hands: #b88a4a;
+        --hands-bg: #f5ecdc;
+        --session: #6b7560;
+        --session-bg: #ecede5;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { font-size: 16px; }
+      body {
+        font-family:
+          ui-serif, "Charter", "Iowan Old Style", "Source Serif Pro", Georgia,
+          "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+        background: var(--paper);
+        color: var(--ink);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        padding: 64px 24px 96px;
+      }
+      .doc { max-width: 840px; margin: 0 auto; }
+      .doc-header { border-bottom: 1px solid var(--rule); padding-bottom: 28px; margin-bottom: 48px; }
+      .doc-eyebrow {
+        font-family: ui-monospace, "SF Mono", Menlo, "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 14px;
+      }
+      .doc-title {
+        font-family: ui-serif, Charter, Georgia, "Songti SC", "Source Han Serif SC", serif;
+        font-size: 34px;
+        font-weight: 600;
+        line-height: 1.2;
+      }
+      .doc-subtitle { font-size: 16px; color: var(--ink-soft); margin-top: 10px; font-style: italic; }
+      .doc-meta {
+        font-family: ui-monospace, Menlo, "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        color: var(--ink-faint);
+        margin-top: 18px;
+        display: flex;
+        gap: 24px;
+      }
+      .tldr {
+        background: var(--accent-faint);
+        border-left: 2px solid var(--accent);
+        padding: 20px 24px;
+        margin-bottom: 56px;
+        font-size: 15px;
+      }
+      .tldr-label {
+        font-family: ui-monospace, Menlo, "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      section { margin-bottom: 56px; }
+      h2 {
+        font-size: 22px;
+        font-weight: 600;
+        margin-bottom: 18px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--rule);
+      }
+      h2 .num {
+        font-family: ui-monospace, Menlo, "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-weight: 500;
+        margin-right: 14px;
+        letter-spacing: 0.05em;
+      }
+      h3 { font-size: 16px; font-weight: 600; margin: 28px 0 10px; }
+      h4 { font-size: 14px; font-weight: 600; margin: 22px 0 8px; }
+      p { margin-bottom: 14px; }
+      code {
+        font-family: ui-monospace, "SF Mono", Menlo, "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 13px;
+        background: var(--code-bg);
+        padding: 1px 5px;
+        border-radius: 2px;
+      }
+      pre {
+        font-family: ui-monospace, Menlo, "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 12.5px;
+        line-height: 1.55;
+        background: var(--code-bg);
+        padding: 14px 18px;
+        margin: 14px 0 18px;
+        overflow-x: auto;
+        border-left: 2px solid var(--rule);
+      }
+      pre code { background: transparent; padding: 0; }
+      ul, ol { margin: 8px 0 16px 22px; }
+      li { margin-bottom: 6px; }
+      strong { font-weight: 600; }
+      table { width: 100%; border-collapse: collapse; margin: 14px 0 18px; font-size: 14px; }
+      th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+      th {
+        font-weight: 600;
+        font-family: ui-sans-serif, system-ui, "PingFang SC", "Hiragino Sans GB", sans-serif;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--ink-faint);
+        border-bottom: 1px solid var(--rule);
+      }
+      td.num { font-family: ui-monospace, Menlo, "PingFang SC", "Hiragino Sans GB", monospace; font-size: 13px; }
+      td.accent { color: var(--accent); font-weight: 500; }
+      .callout { border: 1px solid var(--rule); background: #fff; padding: 16px 18px; margin: 16px 0 20px; }
+      .callout.warn { border-color: #e6d4a8; background: var(--warn-soft); }
+      .callout-label {
+        font-family: ui-monospace, Menlo, "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .callout.warn .callout-label { color: var(--warn); }
+      figure { margin: 28px 0 32px; border: 1px solid var(--rule); background: #fff; }
+      figure svg { display: block; width: 100%; height: auto; }
+      figcaption {
+        font-family: ui-monospace, Menlo, "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-faint);
+        padding: 10px 16px;
+        border-top: 1px solid var(--rule-soft);
+        background: var(--paper-edge);
+      }
+      figcaption .fig-num { color: var(--accent); margin-right: 10px; font-weight: 600; }
+      .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 20px 0 18px; }
+      .card { border: 1px solid var(--rule); background: #fff; padding: 16px 16px 14px; }
+      .card-icon {
+        font-family: ui-monospace, Menlo, "PingFang SC", "Hiragino Sans GB", monospace;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .card-name { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+      .card-where { font-size: 12px; color: var(--ink-faint); font-style: italic; margin-bottom: 10px; }
+      .card-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+      .card.tone-a .card-icon { color: var(--brain); }
+      .card.tone-b .card-icon { color: var(--hands); }
+      .card.tone-c .card-icon { color: var(--session); }
+      footer {
+        margin-top: 80px;
+        padding-top: 24px;
+        border-top: 1px solid var(--rule);
+        font-size: 12px;
+        color: var(--ink-faint);
+      }
+      footer h4 {
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-family: ui-monospace, Menlo, "PingFang SC", "Hiragino Sans GB", monospace;
+        margin-bottom: 10px;
+        color: var(--ink-soft);
+      }
+      footer ul { list-style: none; margin-left: 0; }
+      footer li { margin-bottom: 4px; }
+      .mascot { display: inline-block; width: 8px; height: 8px; background: var(--accent); margin-right: 8px; vertical-align: middle; }
+      @media (max-width: 720px) {
+        body { padding: 32px 16px 64px; }
+        .doc-title { font-size: 26px; }
+        .cards { grid-template-columns: 1fr; }
+        .doc-meta { flex-wrap: wrap; gap: 12px; }
+      }
+    </style>
+  </head>
+  <body>
+    <article class="doc">
+      <header class="doc-header">
+        <div class="doc-eyebrow"><span class="mascot"></span>Hanami · Proxy Retrospective</div>
+        <h1 class="doc-title">把 hanami.top 接到中间层代理：从 403 到 HTTPS</h1>
+        <p class="doc-subtitle">一次小型上线记录：中间层 nginx、上游 Host、证书和跳转重写。</p>
+        <div class="doc-meta">
+          <span>STATUS · PUBLISHED</span>
+          <span>DATE · 2026-07-03</span>
+          <span>AUTHOR · Hanami Ops</span>
+        </div>
+      </header>
+
+      <div class="tldr">
+        <div class="tldr-label">TL;DR</div>
+        今天把 <code>hanami.top</code> 接到一台中间层服务器上，由它用 nginx 反向代理到真实博客服务。主要坑点不是 nginx 本身，而是上游对 <code>Host</code> 的判断、HTTPS 证书落点，以及上游返回绝对地址 <code>Location</code> 时把公网 IP 泄露给浏览器。最终状态是：域名解析到中间层，中间层同时服务 HTTP/HTTPS，再把请求稳定转发到博客源站。
+      </div>
+
+      <section>
+        <h2><span class="num">01</span>目标与最终链路</h2>
+        <p>原始目标很直接：用户访问 <code>hanami.top</code> 或中间层 IP 时，拿到后端博客服务的内容。后端博客已经部署在 <code>47.101.44.162</code>，中间层负责对外暴露 80 和 443，并隐藏后端的直接访问细节。</p>
+        <figure>
+          <svg viewBox="0 0 760 360" xmlns="http://www.w3.org/2000/svg"
+               font-family="ui-monospace, Menlo, monospace" font-size="12">
+            <rect width="760" height="360" fill="#fff"/>
+            <defs>
+              <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5"
+                      markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#6f9bb8"/>
+              </marker>
+            </defs>
+            <g>
+              <rect x="40" y="130" width="160" height="92" fill="#eef4f8" stroke="#6f9bb8" stroke-width="1.4"/>
+              <text x="54" y="154" fill="#6f9bb8" font-weight="600" letter-spacing="0.1em" font-size="11">CLIENT</text>
+              <text x="54" y="176" fill="#7a7a7a" font-size="10.5" font-style="italic">→ Browser</text>
+              <text x="54" y="200" fill="#4a4a4a">hanami.top</text>
+            </g>
+            <g>
+              <rect x="300" y="114" width="170" height="124" fill="#f5ecdc" stroke="#b88a4a" stroke-width="1.4"/>
+              <text x="314" y="138" fill="#7a6420" font-weight="600" letter-spacing="0.1em" font-size="11">EDGE PROXY</text>
+              <text x="314" y="160" fill="#7a7a7a" font-size="10.5" font-style="italic">→ nginx on 206</text>
+              <text x="314" y="184" fill="#4a4a4a">80 + 443</text>
+              <text x="314" y="206" fill="#4a4a4a">SSL terminates here</text>
+            </g>
+            <g>
+              <rect x="570" y="130" width="150" height="92" fill="#ecede5" stroke="#6b7560" stroke-width="1.4"/>
+              <text x="584" y="154" fill="#5a5a3a" font-weight="600" letter-spacing="0.1em" font-size="11">ORIGIN</text>
+              <text x="584" y="176" fill="#7a7a7a" font-size="10.5" font-style="italic">→ blog service</text>
+              <text x="584" y="200" fill="#4a4a4a">47.101.44.162</text>
+            </g>
+            <g fill="none" stroke="#6f9bb8" stroke-width="1.4">
+              <path d="M 200 176 L 298 176" marker-end="url(#arr)"/>
+              <path d="M 470 176 L 568 176" marker-end="url(#arr)"/>
+            </g>
+            <text x="249" y="160" fill="#7a7a7a" font-size="10" text-anchor="middle">DNS + HTTPS</text>
+            <text x="519" y="160" fill="#7a7a7a" font-size="10" text-anchor="middle">proxy_pass</text>
+            <text x="380" y="278" fill="#7a7a7a" text-anchor="middle">Upstream Host is pinned to 47.101.44.162</text>
+          </svg>
+          <figcaption><span class="fig-num">FIG 1</span>最终访问路径 · 域名只指向中间层，源站保持在后面</figcaption>
+        </figure>
+        <div class="cards">
+          <div class="card tone-a">
+            <div class="card-icon">DNS</div>
+            <div class="card-name">域名解析</div>
+            <div class="card-where">→ hanami.top</div>
+            <div class="card-desc">A 记录指向中间层，用户不需要知道源站地址。</div>
+          </div>
+          <div class="card tone-b">
+            <div class="card-icon">NGINX</div>
+            <div class="card-name">边缘代理</div>
+            <div class="card-where">→ 206.119.160.252</div>
+            <div class="card-desc">负责端口监听、TLS 终止、Header 处理和跳转重写。</div>
+          </div>
+          <div class="card tone-c">
+            <div class="card-icon">ORIGIN</div>
+            <div class="card-name">博客源站</div>
+            <div class="card-where">→ 47.101.44.162</div>
+            <div class="card-desc">继续提供实际博客内容，中间层只做转发和兼容。</div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2><span class="num">02</span>第一步：让中间层真正能代理</h2>
+        <p>中间层一开始没有 nginx，80 端口也没有服务监听。确认系统是 CentOS 7 后，先通过 EPEL 安装 nginx，再新增一个反向代理配置，把所有路径转发到博客源站。</p>
+        <pre><code>location / {
+    proxy_pass http://47.101.44.162;
+    proxy_http_version 1.1;
+    proxy_set_header Host 47.101.44.162;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}</code></pre>
+        <p>这里最关键的一行是 <code>proxy_set_header Host 47.101.44.162;</code>。如果把浏览器访问的原始 Host 原样透传给源站，源站会看到 <code>hanami.top</code>，而它当时并不接受这个 Host，于是返回 403。</p>
+        <div class="callout warn">
+          <div class="callout-label">LESSON</div>
+          反向代理不只是把 TCP 流量转过去。对于 HTTP 服务，<code>Host</code> 往往就是路由条件。中间层换 IP 通常不需要改源站，但上游接受哪个 Host 必须明确。
+        </div>
+      </section>
+
+      <section>
+        <h2><span class="num">03</span>第二步：把域名和 HTTPS 放到边缘</h2>
+        <p>域名解析已经指向中间层后，下一步是在中间层终止 TLS。证书覆盖 <code>hanami.top</code> 和 <code>www.hanami.top</code>，私钥和证书匹配后，文件被放入 nginx 的证书目录，并将同一个代理服务扩展到 443。</p>
+        <pre><code>listen 443 ssl http2 default_server;
+server_name hanami.top www.hanami.top 206.119.160.252;
+
+ssl_certificate     /etc/nginx/ssl/hanami.top.pem;
+ssl_certificate_key /etc/nginx/ssl/hanami.top.key;
+ssl_protocols TLSv1.2 TLSv1.3;</code></pre>
+        <p>这样做以后，浏览器和中间层之间是 HTTPS；中间层到源站仍然走 <code>http://47.101.44.162</code>。对于这个博客场景，这个分层已经足够清晰：公网入口负责证书，源站继续专注内容服务。</p>
+      </section>
+
+      <section>
+        <h2><span class="num">04</span>第三步：修掉泄露源站 IP 的 301</h2>
+        <p>最后一个问题出现在 <code>/blog</code> 这个不带尾斜杠的路径。源站会把它规范化为 <code>/blog/</code>，但它生成的绝对跳转地址是 <code>http://47.101.44.162/blog/</code>。浏览器收到这个 <code>Location</code> 后就会直接跳去源站 IP。</p>
+        <p>修复分两层：中间层自己处理最常见的 <code>/blog</code> 跳转；其余从源站返回的绝对 <code>Location</code>，统一重写回当前访问的域名和协议。</p>
+        <pre><code>location = /blog {
+    return 301 $scheme://$host/blog/;
+}
+
+location / {
+    proxy_pass http://47.101.44.162;
+    proxy_redirect ~^http://47\.101\.44\.162(?::80)?(/.*)$ $scheme://$host$1;
+}</code></pre>
+        <table>
+          <thead>
+            <tr>
+              <th>检查项</th>
+              <th>结果</th>
+              <th>意义</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>https://hanami.top/blog</code></td>
+              <td class="accent">301 到域名</td>
+              <td>跳转目标是 <code>https://hanami.top/blog/</code>，不再暴露源站 IP。</td>
+            </tr>
+            <tr>
+              <td><code>https://hanami.top/blog/</code></td>
+              <td class="accent">200 OK</td>
+              <td>最终博客页面可通过 HTTPS 正常访问。</td>
+            </tr>
+            <tr>
+              <td>TLS 握手</td>
+              <td class="accent">Verification OK</td>
+              <td>证书链有效，证书主体是 <code>hanami.top</code>。</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2><span class="num">05</span>这次配置留下的原则</h2>
+        <ul>
+          <li><strong>中间层可以替换。</strong> 以后如果 206 这台机器换成别的 IP，只要新机器部署同样的 nginx 配置，并把 DNS 指过去，源站通常不用改。</li>
+          <li><strong>Host 要显式设计。</strong> 面向用户的 Host 和面向源站的 Host 可以不是同一个。这里用户看到 <code>hanami.top</code>，源站看到 <code>47.101.44.162</code>。</li>
+          <li><strong>证书放在公网入口。</strong> 谁对浏览器提供 HTTPS，谁就持有并加载对应域名的证书。</li>
+          <li><strong>Location 也属于代理面。</strong> 只处理请求头不够，响应里的绝对跳转也要检查，否则用户会被带到内部或源站地址。</li>
+        </ul>
+      </section>
+
+      <footer>
+        <h4>Changelog</h4>
+        <ul>
+          <li>2026-07-03 · 中间层 nginx 安装、域名接入、SSL 配置、上游 Host 固定、301 Location 重写。</li>
+        </ul>
+      </footer>
+    </article>
+  </body>
+</html>
